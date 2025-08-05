@@ -8,9 +8,7 @@ datasource db {
 }
 
 model User {
-  id              String          @id @unique // ID do usuário do Clerk
-  email           String          @unique
-  name            String?
+  id              String          @id // ID do usuário do Clerk
   creditCards     CreditCard[]
   personCompanies PersonCompany[]
   debts           Debt[]

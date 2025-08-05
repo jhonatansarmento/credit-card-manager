@@ -1,15 +1,13 @@
 'use server';
 
 import prisma from '@/lib/db';
-import { auth } from '@clerk/nextjs/server';
+import { ensureUserExists } from '@/lib/ensure-user-exists'; // novo utilitário
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 export async function createCreditCard(formData: FormData) {
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error('User not authenticated');
-  }
+  const userId = await ensureUserExists();
+  console.log('🚀 ~ createCreditCard ~ userId:', userId);
 
   const name = formData.get('name') as string;
   const dueDay = Number.parseInt(formData.get('dueDay') as string);
@@ -40,10 +38,7 @@ export async function createCreditCard(formData: FormData) {
 }
 
 export async function updateCreditCard(id: string, formData: FormData) {
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error('User not authenticated');
-  }
+  const userId = await ensureUserExists();
 
   const name = formData.get('name') as string;
   const dueDay = Number.parseInt(formData.get('dueDay') as string);
@@ -57,7 +52,7 @@ export async function updateCreditCard(id: string, formData: FormData) {
 
   try {
     await prisma.creditCard.update({
-      where: { id, userId }, // Garante que o usuário é o proprietário do cartão
+      where: { id, userId },
       data: {
         name,
         dueDay,
@@ -74,13 +69,9 @@ export async function updateCreditCard(id: string, formData: FormData) {
 }
 
 export async function deleteCreditCard(id: string) {
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error('User not authenticated');
-  }
+  const userId = await ensureUserExists();
 
   try {
-    // Verifica se há dívidas associadas a este cartão
     const associatedDebts = await prisma.debt.count({
       where: { cardId: id, userId },
     });
@@ -92,7 +83,7 @@ export async function deleteCreditCard(id: string) {
     }
 
     await prisma.creditCard.delete({
-      where: { id, userId }, // Garante que o usuário é o proprietário do cartão
+      where: { id, userId },
     });
     revalidatePath('/cards');
   } catch (error) {
