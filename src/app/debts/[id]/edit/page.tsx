@@ -8,12 +8,13 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 interface EditDebtPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function EditDebtPage({ params }: EditDebtPageProps) {
+  const resolvedParams = await params;
   const { userId } = await auth();
   if (!userId) {
     notFound();
@@ -21,7 +22,7 @@ export default async function EditDebtPage({ params }: EditDebtPageProps) {
 
   const debt = await prisma.debt.findUnique({
     where: {
-      id: params.id,
+      id: resolvedParams.id,
       userId: userId, // Garante que o usuário é o proprietário da dívida
     },
   });

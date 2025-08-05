@@ -167,7 +167,7 @@ export default function DebtFilters({
               selected={selectedDate}
               onSelect={setSelectedDate}
               initialFocus
-              captionLayout='dropdown-buttons'
+              captionLayout='dropdown'
               fromYear={2020}
               toYear={new Date().getFullYear() + 5}
             />

@@ -27,15 +27,16 @@ import { Suspense } from 'react';
 import { deleteDebt, toggleInstallmentPaidStatus } from './actions';
 
 interface DebtsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     cardId?: string;
     personCompanyId?: string;
     month?: string;
     year?: string;
-  };
+  }>;
 }
 
 export default async function DebtsPage({ searchParams }: DebtsPageProps) {
+  const resolvedSearchParams = await searchParams;
   const { userId } = await auth();
   if (!userId) {
     return (
@@ -50,7 +51,7 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
     );
   }
 
-  const { cardId, personCompanyId, month, year } = searchParams;
+  const { cardId, personCompanyId, month, year } = resolvedSearchParams;
 
   const creditCards = await prisma.creditCard.findMany({
     where: { userId },

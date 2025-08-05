@@ -5,14 +5,15 @@ import { auth } from '@clerk/nextjs/server';
 import { notFound } from 'next/navigation';
 
 interface EditCreditCardPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function EditCreditCardPage({
   params,
 }: EditCreditCardPageProps) {
+  const resolvedParams = await params;
   const { userId } = await auth();
   if (!userId) {
     notFound();
@@ -20,7 +21,7 @@ export default async function EditCreditCardPage({
 
   const card = await prisma.creditCard.findUnique({
     where: {
-      id: params.id,
+      id: resolvedParams.id,
       userId: userId, // Garante que o usuário é o proprietário do cartão
     },
   });
