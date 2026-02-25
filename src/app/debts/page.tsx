@@ -18,7 +18,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import prisma from '@/lib/db';
-import { auth } from '@clerk/nextjs/server';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CheckCircle, CircleDashed, Pencil, PlusCircle } from 'lucide-react';
@@ -35,20 +34,11 @@ interface DebtsPageProps {
   };
 }
 
+// TODO: Substituir por autenticação real
+const getUserId = () => 'temp-user-id';
+
 export default async function DebtsPage({ searchParams }: DebtsPageProps) {
-  const { userId } = await auth();
-  if (!userId) {
-    return (
-      <div className='flex flex-col min-h-screen bg-gray-100 dark:bg-gray-950'>
-        <Navbar />
-        <main className='flex-1 p-4 md:p-6 flex items-center justify-center'>
-          <p className='text-lg text-gray-500 dark:text-gray-400'>
-            Por favor, faça login para gerenciar suas dívidas.
-          </p>
-        </main>
-      </div>
-    );
-  }
+  const userId = getUserId();
 
   const { cardId, personCompanyId, month, year } = searchParams;
 
@@ -77,12 +67,12 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
     const startOfMonth = new Date(
       Number.parseInt(year),
       Number.parseInt(month) - 1,
-      1
+      1,
     );
     const endOfMonth = new Date(
       Number.parseInt(year),
       Number.parseInt(month),
-      0
+      0,
     ); // Último dia do mês
 
     const debtsWithInstallmentsInMonth = await prisma.debt.findMany({
@@ -101,7 +91,7 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
       select: { id: true },
     });
     debtIdsWithMatchingInstallments = debtsWithInstallmentsInMonth.map(
-      (d) => d.id
+      (d) => d.id,
     );
     whereClause.id = { in: debtIdsWithMatchingInstallments };
   }
@@ -136,7 +126,7 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
       sum +
       installmentsForDisplay.reduce(
         (installmentSum, inst) => installmentSum + inst.amount,
-        0
+        0,
       )
     );
   }, 0);
@@ -290,7 +280,7 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                                       action={toggleInstallmentPaidStatus.bind(
                                         null,
                                         installment.id,
-                                        installment.isPaid
+                                        installment.isPaid,
                                       )}
                                     >
                                       <Button

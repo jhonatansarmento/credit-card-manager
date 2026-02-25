@@ -1,8 +1,10 @@
 import CreditCardForm from '@/components/credit-card-form';
 import Navbar from '@/components/navbar';
 import prisma from '@/lib/db';
-import { auth } from '@clerk/nextjs/server';
 import { notFound } from 'next/navigation';
+
+// TODO: Substituir por autenticação real
+const getUserId = () => 'temp-user-id';
 
 interface EditCreditCardPageProps {
   params: {
@@ -13,10 +15,7 @@ interface EditCreditCardPageProps {
 export default async function EditCreditCardPage({
   params,
 }: EditCreditCardPageProps) {
-  const { userId } = await auth();
-  if (!userId) {
-    notFound();
-  }
+  const userId = getUserId();
 
   const card = await prisma.creditCard.findUnique({
     where: {

@@ -1,8 +1,10 @@
 import Navbar from '@/components/navbar';
 import PersonCompanyForm from '@/components/person-company-form';
 import prisma from '@/lib/db';
-import { auth } from '@clerk/nextjs/server';
 import { notFound } from 'next/navigation';
+
+// TODO: Substituir por autenticação real
+const getUserId = () => 'temp-user-id';
 
 interface EditPersonCompanyPageProps {
   params: {
@@ -13,10 +15,7 @@ interface EditPersonCompanyPageProps {
 export default async function EditPersonCompanyPage({
   params,
 }: EditPersonCompanyPageProps) {
-  const { userId } = await auth();
-  if (!userId) {
-    notFound();
-  }
+  const userId = getUserId();
 
   const personCompany = await prisma.personCompany.findUnique({
     where: {

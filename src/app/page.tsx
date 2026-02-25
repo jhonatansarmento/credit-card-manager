@@ -1,17 +1,9 @@
 import Navbar from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { auth } from '@clerk/nextjs/server';
 import { CreditCard, Link, Users, Wallet } from 'lucide-react';
-import { redirect } from 'next/navigation';
 
 const HomePage = async () => {
-  const { userId } = await auth();
-
-  if (!userId) {
-    redirect('/login');
-  }
-
   return (
     <div className='flex flex-col min-h-screen bg-gray-100 dark:bg-gray-950'>
       <Navbar />

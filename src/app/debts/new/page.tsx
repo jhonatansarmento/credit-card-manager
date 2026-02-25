@@ -3,15 +3,13 @@ import Navbar from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import prisma from '@/lib/db';
-import { auth } from '@clerk/nextjs/server';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+
+// TODO: Substituir por autenticação real
+const getUserId = () => 'temp-user-id';
 
 export default async function NewDebtPage() {
-  const { userId } = await auth();
-  if (!userId) {
-    notFound();
-  }
+  const userId = getUserId();
 
   const creditCards = await prisma.creditCard.findMany({
     where: { userId },

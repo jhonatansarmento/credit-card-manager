@@ -1,12 +1,8 @@
 import { Button } from '@/components/ui/button';
-import { UserButton } from '@clerk/nextjs';
-import { auth } from '@clerk/nextjs/server';
 import { CreditCard, Home, Users, Wallet } from 'lucide-react';
 import Link from 'next/link';
 
-export default async function Navbar() {
-  const { userId } = await auth();
-
+export default function Navbar() {
   return (
     <header className='flex items-center justify-between h-16 px-4 border-b bg-white dark:bg-gray-900 dark:border-gray-800'>
       <Link
@@ -44,13 +40,7 @@ export default async function Navbar() {
         </Button>
       </nav>
       <div className='flex items-center gap-4'>
-        {userId ? (
-          <UserButton afterSignOutUrl='/' />
-        ) : (
-          <Button asChild>
-            <Link href='/sign-in'>Entrar</Link>
-          </Button>
-        )}
+        {/* TODO: Adicionar botão de auth */}
       </div>
     </header>
   );

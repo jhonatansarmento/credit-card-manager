@@ -1,15 +1,14 @@
 'use server';
 
 import prisma from '@/lib/db';
-import { auth } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
+// TODO: Substituir por autenticação real
+const getUserId = () => 'temp-user-id';
+
 export async function createCreditCard(formData: FormData) {
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error('User not authenticated');
-  }
+  const userId = getUserId();
 
   const name = formData.get('name') as string;
   const dueDay = Number.parseInt(formData.get('dueDay') as string);
@@ -34,16 +33,13 @@ export async function createCreditCard(formData: FormData) {
   } catch (error) {
     console.error('Failed to create credit card:', error);
     throw new Error(
-      'Failed to create credit card. Make sure the name is unique.'
+      'Failed to create credit card. Make sure the name is unique.',
     );
   }
 }
 
 export async function updateCreditCard(id: string, formData: FormData) {
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error('User not authenticated');
-  }
+  const userId = getUserId();
 
   const name = formData.get('name') as string;
   const dueDay = Number.parseInt(formData.get('dueDay') as string);
@@ -68,16 +64,13 @@ export async function updateCreditCard(id: string, formData: FormData) {
   } catch (error) {
     console.error('Failed to update credit card:', error);
     throw new Error(
-      'Failed to update credit card. Make sure the name is unique.'
+      'Failed to update credit card. Make sure the name is unique.',
     );
   }
 }
 
 export async function deleteCreditCard(id: string) {
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error('User not authenticated');
-  }
+  const userId = getUserId();
 
   try {
     // Verifica se há dívidas associadas a este cartão
@@ -87,7 +80,7 @@ export async function deleteCreditCard(id: string) {
 
     if (associatedDebts > 0) {
       throw new Error(
-        'Não é possível excluir o cartão: Ele possui dívidas associadas. Por favor, exclua as dívidas primeiro.'
+        'Não é possível excluir o cartão: Ele possui dívidas associadas. Por favor, exclua as dívidas primeiro.',
       );
     }
 

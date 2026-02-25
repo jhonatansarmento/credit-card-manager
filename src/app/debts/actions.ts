@@ -1,9 +1,11 @@
 'use server';
 
 import prisma from '@/lib/db';
-import { auth } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+
+// TODO: Substituir por autenticação real
+const getUserId = () => 'temp-user-id';
 
 // Função auxiliar para calcular o valor da parcela e gerar as parcelas
 async function generateDebtAndInstallments(
@@ -14,10 +16,10 @@ async function generateDebtAndInstallments(
   installmentsQuantity: number,
   startDate: Date,
   description: string,
-  debtId?: string // Para atualização
+  debtId?: string, // Para atualização
 ) {
   const installmentValue = Number.parseFloat(
-    (totalAmount / installmentsQuantity).toFixed(2)
+    (totalAmount / installmentsQuantity).toFixed(2),
   );
 
   const installmentsData = [];
@@ -91,16 +93,13 @@ async function generateDebtAndInstallments(
 }
 
 export async function createDebt(formData: FormData) {
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error('User not authenticated');
-  }
+  const userId = getUserId();
 
   const cardId = formData.get('cardId') as string;
   const personCompanyId = formData.get('personCompanyId') as string;
   const totalAmount = Number.parseFloat(formData.get('totalAmount') as string);
   const installmentsQuantity = Number.parseInt(
-    formData.get('installmentsQuantity') as string
+    formData.get('installmentsQuantity') as string,
   );
   const description = formData.get('description') as string;
   const startDateString = formData.get('startDate') as string; // YYYY-MM-DD
@@ -116,7 +115,7 @@ export async function createDebt(formData: FormData) {
   }
   if (totalAmount <= 0 || installmentsQuantity <= 0) {
     throw new Error(
-      'O valor total e a quantidade de parcelas devem ser positivos.'
+      'O valor total e a quantidade de parcelas devem ser positivos.',
     );
   }
 
@@ -140,7 +139,7 @@ export async function createDebt(formData: FormData) {
       totalAmount,
       installmentsQuantity,
       startDate,
-      description
+      description,
     );
     revalidatePath('/debts');
     redirect('/debts');
@@ -151,16 +150,13 @@ export async function createDebt(formData: FormData) {
 }
 
 export async function updateDebt(id: string, formData: FormData) {
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error('User not authenticated');
-  }
+  const userId = getUserId();
 
   const cardId = formData.get('cardId') as string;
   const personCompanyId = formData.get('personCompanyId') as string;
   const totalAmount = Number.parseFloat(formData.get('totalAmount') as string);
   const installmentsQuantity = Number.parseInt(
-    formData.get('installmentsQuantity') as string
+    formData.get('installmentsQuantity') as string,
   );
   const description = formData.get('description') as string;
   const startDateString = formData.get('startDate') as string;
@@ -176,7 +172,7 @@ export async function updateDebt(id: string, formData: FormData) {
   }
   if (totalAmount <= 0 || installmentsQuantity <= 0) {
     throw new Error(
-      'O valor total e a quantidade de parcelas devem ser positivos.'
+      'O valor total e a quantidade de parcelas devem ser positivos.',
     );
   }
 
@@ -200,7 +196,7 @@ export async function updateDebt(id: string, formData: FormData) {
       installmentsQuantity,
       startDate,
       description,
-      id // Passa o ID da dívida para atualização
+      id, // Passa o ID da dívida para atualização
     );
     revalidatePath('/debts');
     redirect('/debts');
@@ -211,10 +207,7 @@ export async function updateDebt(id: string, formData: FormData) {
 }
 
 export async function deleteDebt(id: string) {
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error('User not authenticated');
-  }
+  const userId = getUserId();
 
   try {
     await prisma.debt.delete({
@@ -229,12 +222,9 @@ export async function deleteDebt(id: string) {
 
 export async function toggleInstallmentPaidStatus(
   installmentId: string,
-  isPaid: boolean
+  isPaid: boolean,
 ) {
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error('User not authenticated');
-  }
+  const userId = getUserId();
 
   try {
     // Verifica se o usuário é o proprietário da dívida associada à parcela

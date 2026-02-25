@@ -16,25 +16,15 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import prisma from '@/lib/db';
-import { auth } from '@clerk/nextjs/server';
 import { Pencil, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 import { deleteCreditCard } from './actions';
 
+// TODO: Substituir por autenticação real
+const getUserId = () => 'temp-user-id';
+
 export default async function CreditCardsPage() {
-  const { userId } = await auth();
-  if (!userId) {
-    return (
-      <div className='flex flex-col min-h-screen bg-gray-100 dark:bg-gray-950'>
-        <Navbar />
-        <main className='flex-1 p-4 md:p-6 flex items-center justify-center'>
-          <p className='text-lg text-gray-500 dark:text-gray-400'>
-            Por favor, faça login para gerenciar seus cartões.
-          </p>
-        </main>
-      </div>
-    );
-  }
+  const userId = getUserId();
 
   const creditCards = await prisma.creditCard.findMany({
     where: { userId },
