@@ -39,17 +39,21 @@ async function buildInstallments(
   return {
     installmentValue,
     installmentsData: Array.from({ length: installmentsQuantity }, (_, i) => {
-      const installmentDate = new Date(startDate);
-      installmentDate.setMonth(startDate.getMonth() + i);
-      installmentDate.setDate(creditCard.dueDay);
-      // Handle months with fewer days than dueDay
-      if (installmentDate.getDate() !== creditCard.dueDay) {
-        installmentDate.setDate(0);
-        installmentDate.setMonth(installmentDate.getMonth() + 1);
-      }
+      const startYear = startDate.getUTCFullYear();
+      const startMonth = startDate.getUTCMonth();
+
+      const rawMonth = startMonth + i;
+      const targetYear = startYear + Math.floor(rawMonth / 12);
+      const targetMonth = rawMonth % 12;
+
+      const daysInMonth = new Date(
+        Date.UTC(targetYear, targetMonth + 1, 0),
+      ).getUTCDate();
+      const day = Math.min(creditCard.dueDay, daysInMonth);
+
       return {
         installmentNumber: i + 1,
-        dueDate: installmentDate,
+        dueDate: new Date(Date.UTC(targetYear, targetMonth, day)),
         amount: installmentValue,
         isPaid: false,
       };

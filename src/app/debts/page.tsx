@@ -55,39 +55,47 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
     whereClause.personCompanyId = personCompanyId;
   }
 
-  // Filtra as dívidas que possuem pelo menos uma parcela no mês/ano selecionado
-  let debtIdsWithMatchingInstallments: string[] = [];
-  if (month && year) {
-    const startOfMonth = new Date(
-      Number.parseInt(year),
-      Number.parseInt(month) - 1,
-      1,
-    );
-    const endOfMonth = new Date(
-      Number.parseInt(year),
-      Number.parseInt(month),
-      0,
-    ); // Último dia do mês
+  // Filtra as dívidas que possuem parcelas no período selecionado (mês/ano ou só ano)
+  if (month || year) {
+    const parsedYear = year ? Number.parseInt(year) : undefined;
+    const parsedMonth = month ? Number.parseInt(month) : undefined;
 
-    const debtsWithInstallmentsInMonth = await prisma.debt.findMany({
+    let startDate: Date;
+    let endDate: Date;
+
+    if (parsedYear && parsedMonth) {
+      // Mês + Ano
+      startDate = new Date(parsedYear, parsedMonth - 1, 1);
+      endDate = new Date(parsedYear, parsedMonth, 0); // último dia do mês
+    } else if (parsedYear) {
+      // Só Ano
+      startDate = new Date(parsedYear, 0, 1);
+      endDate = new Date(parsedYear, 11, 31);
+    } else {
+      // Só Mês (usa ano atual)
+      const currentYear = new Date().getFullYear();
+      startDate = new Date(currentYear, parsedMonth! - 1, 1);
+      endDate = new Date(currentYear, parsedMonth!, 0);
+    }
+
+    const debtsWithMatchingInstallments = await prisma.debt.findMany({
       where: {
         userId,
-        ...whereClause, // Aplica filtros de cartão/pessoa também aqui
+        ...whereClause,
         installments: {
           some: {
             dueDate: {
-              gte: startOfMonth,
-              lte: endOfMonth,
+              gte: startDate,
+              lte: endDate,
             },
           },
         },
       },
       select: { id: true },
     });
-    debtIdsWithMatchingInstallments = debtsWithInstallmentsInMonth.map(
-      (d) => d.id,
-    );
-    whereClause.id = { in: debtIdsWithMatchingInstallments };
+    whereClause.id = {
+      in: debtsWithMatchingInstallments.map((d) => d.id),
+    };
   }
 
   const debts = await prisma.debt.findMany({
@@ -108,13 +116,16 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
   // Calcula o total das parcelas exibidas (considerando o filtro de mês/ano)
   const totalAmountDisplayed = debts.reduce((sum, debt) => {
     const installmentsForDisplay = debt.installments.filter((inst) => {
-      if (month && year) {
-        return (
-          inst.dueDate.getMonth() === Number.parseInt(month) - 1 &&
-          inst.dueDate.getFullYear() === Number.parseInt(year)
-        );
+      if (month || year) {
+        const monthMatch = month
+          ? inst.dueDate.getMonth() === Number.parseInt(month) - 1
+          : true;
+        const yearMatch = year
+          ? inst.dueDate.getFullYear() === Number.parseInt(year)
+          : true;
+        return monthMatch && yearMatch;
       }
-      return true; // Se não houver filtro de mês/ano, inclui todas as parcelas
+      return true;
     });
     return (
       sum +
@@ -215,14 +226,16 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                       {debt.installments
                         .filter((inst) => {
-                          // Filtra as parcelas para exibição com base no filtro de mês/ano
-                          if (month && year) {
-                            return (
-                              inst.dueDate.getMonth() ===
-                                Number.parseInt(month) - 1 &&
-                              inst.dueDate.getFullYear() ===
+                          if (month || year) {
+                            const monthMatch = month
+                              ? inst.dueDate.getMonth() ===
+                                Number.parseInt(month) - 1
+                              : true;
+                            const yearMatch = year
+                              ? inst.dueDate.getFullYear() ===
                                 Number.parseInt(year)
-                            );
+                              : true;
+                            return monthMatch && yearMatch;
                           }
                           return true;
                         })

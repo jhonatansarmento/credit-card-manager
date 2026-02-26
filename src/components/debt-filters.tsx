@@ -3,12 +3,6 @@
 import { Card } from '@/components/ui/card';
 
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -17,11 +11,24 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { CreditCard, PersonCompany } from '@prisma/client';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, Filter, XCircle } from 'lucide-react';
+import { CalendarClock, XCircle } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+
+const MONTH_NAMES = [
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
+];
 
 interface DebtFiltersProps {
   creditCards: CreditCard[];
@@ -47,149 +54,195 @@ export default function DebtFilters({
   const [selectedPersonCompanyId, setSelectedPersonCompanyId] = useState(
     initialPersonCompanyId || 'all',
   );
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    initialMonth && initialYear
-      ? new Date(
-          Number.parseInt(initialYear),
-          Number.parseInt(initialMonth) - 1,
-          1,
-        )
-      : undefined,
-  );
+  const [selectedMonth, setSelectedMonth] = useState(initialMonth || 'all');
+  const [selectedYear, setSelectedYear] = useState(initialYear || 'all');
 
   useEffect(() => {
     setSelectedCardId(initialCardId || 'all');
     setSelectedPersonCompanyId(initialPersonCompanyId || 'all');
-    setSelectedDate(
-      initialMonth && initialYear
-        ? new Date(
-            Number.parseInt(initialYear),
-            Number.parseInt(initialMonth) - 1,
-            1,
-          )
-        : undefined,
-    );
+    setSelectedMonth(initialMonth || 'all');
+    setSelectedYear(initialYear || 'all');
   }, [initialCardId, initialPersonCompanyId, initialMonth, initialYear]);
 
-  const applyFilters = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (selectedCardId && selectedCardId !== 'all') {
-      params.set('cardId', selectedCardId);
+  const navigate = useCallback(
+    (cardId: string, personCompanyId: string, month: string, year: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (cardId !== 'all') params.set('cardId', cardId);
+      else params.delete('cardId');
+
+      if (personCompanyId !== 'all')
+        params.set('personCompanyId', personCompanyId);
+      else params.delete('personCompanyId');
+
+      if (month !== 'all') params.set('month', month);
+      else params.delete('month');
+
+      if (year !== 'all') params.set('year', year);
+      else params.delete('year');
+
+      router.push(`/debts?${params.toString()}`);
+    },
+    [router, searchParams],
+  );
+
+  const handleCardChange = (value: string) => {
+    setSelectedCardId(value);
+    navigate(value, selectedPersonCompanyId, selectedMonth, selectedYear);
+  };
+
+  const handlePersonCompanyChange = (value: string) => {
+    setSelectedPersonCompanyId(value);
+    navigate(selectedCardId, value, selectedMonth, selectedYear);
+  };
+
+  const handleMonthChange = (value: string) => {
+    setSelectedMonth(value);
+    // Se escolheu mês mas não tem ano, usa o ano atual
+    const year =
+      selectedYear === 'all'
+        ? new Date().getFullYear().toString()
+        : selectedYear;
+    if (value === 'all') {
+      setSelectedYear('all');
+      navigate(selectedCardId, selectedPersonCompanyId, 'all', 'all');
     } else {
-      params.delete('cardId');
+      setSelectedYear(year);
+      navigate(selectedCardId, selectedPersonCompanyId, value, year);
     }
-    if (selectedPersonCompanyId && selectedPersonCompanyId !== 'all') {
-      params.set('personCompanyId', selectedPersonCompanyId);
-    } else {
-      params.delete('personCompanyId');
-    }
-    if (selectedDate) {
-      params.set('month', (selectedDate.getMonth() + 1).toString());
-      params.set('year', selectedDate.getFullYear().toString());
-    } else {
-      params.delete('month');
-      params.delete('year');
-    }
-    router.push(`/debts?${params.toString()}`);
+  };
+
+  const handleYearChange = (value: string) => {
+    setSelectedYear(value);
+    navigate(selectedCardId, selectedPersonCompanyId, selectedMonth, value);
+  };
+
+  const handleCurrentMonth = () => {
+    const now = new Date();
+    const month = (now.getMonth() + 1).toString();
+    const year = now.getFullYear().toString();
+    setSelectedMonth(month);
+    setSelectedYear(year);
+    navigate(selectedCardId, selectedPersonCompanyId, month, year);
   };
 
   const clearFilters = () => {
     setSelectedCardId('all');
     setSelectedPersonCompanyId('all');
-    setSelectedDate(undefined);
+    setSelectedMonth('all');
+    setSelectedYear('all');
     router.push('/debts');
   };
 
+  const hasActiveFilters =
+    selectedCardId !== 'all' ||
+    selectedPersonCompanyId !== 'all' ||
+    selectedMonth !== 'all' ||
+    selectedYear !== 'all';
+
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 10 }, (_, i) => currentYear - 3 + i);
+
   return (
-    <Card className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-      <div className="grid gap-2">
-        <label htmlFor="filterCard" className="text-sm font-medium">
-          Filtrar por Cartão
-        </label>
-        <Select value={selectedCardId} onValueChange={setSelectedCardId}>
-          <SelectTrigger id="filterCard">
-            <SelectValue placeholder="Todos os Cartões" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os Cartões</SelectItem>
-            {creditCards.map((card) => (
-              <SelectItem key={card.id} value={card.id}>
-                {card.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="grid gap-2">
-        <label htmlFor="filterPersonCompany" className="text-sm font-medium">
-          Filtrar por Pessoa/Empresa
-        </label>
-        <Select
-          value={selectedPersonCompanyId}
-          onValueChange={setSelectedPersonCompanyId}
-        >
-          <SelectTrigger id="filterPersonCompany">
-            <SelectValue placeholder="Todas as Pessoas/Empresas" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as Pessoas/Empresas</SelectItem>
-            {personCompanies.map((pc) => (
-              <SelectItem key={pc.id} value={pc.id}>
-                {pc.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="grid gap-2">
-        <label htmlFor="filterMonthYear" className="text-sm font-medium">
-          Filtrar por Mês/Ano
-        </label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant={'outline'}
-              className={'w-full justify-start text-left font-normal'}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {selectedDate ? (
-                format(selectedDate, 'MMMM yyyy', { locale: ptBR })
-              ) : (
-                <span>Selecione Mês/Ano</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              initialFocus
-              captionLayout="dropdown"
-              fromYear={2020}
-              toYear={new Date().getFullYear() + 5}
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
-
-      <div className="flex gap-2">
-        <Button onClick={applyFilters} className="w-full">
-          <Filter className="h-4 w-4 mr-2" />
-          Aplicar Filtros
-        </Button>
-        {(selectedCardId || selectedPersonCompanyId || selectedDate) && (
-          <Button
-            onClick={clearFilters}
-            variant="outline"
-            className="w-full bg-transparent"
+    <Card className="p-4">
+      <div className="flex flex-col md:flex-row md:items-end gap-4">
+        <div className="grid gap-1.5 flex-1 min-w-0">
+          <label
+            htmlFor="filterCard"
+            className="text-xs font-medium text-muted-foreground"
           >
-            <XCircle className="h-4 w-4 mr-2" />
-            Limpar
+            Cartão
+          </label>
+          <Select value={selectedCardId} onValueChange={handleCardChange}>
+            <SelectTrigger id="filterCard">
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os Cartões</SelectItem>
+              {creditCards.map((card) => (
+                <SelectItem key={card.id} value={card.id}>
+                  {card.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="grid gap-1.5 flex-1 min-w-0">
+          <label
+            htmlFor="filterPersonCompany"
+            className="text-xs font-medium text-muted-foreground"
+          >
+            Pessoa/Empresa
+          </label>
+          <Select
+            value={selectedPersonCompanyId}
+            onValueChange={handlePersonCompanyChange}
+          >
+            <SelectTrigger id="filterPersonCompany">
+              <SelectValue placeholder="Todas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              {personCompanies.map((pc) => (
+                <SelectItem key={pc.id} value={pc.id}>
+                  {pc.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="grid gap-1.5 flex-1 min-w-0">
+          <label className="text-xs font-medium text-muted-foreground">
+            Mês
+          </label>
+          <Select value={selectedMonth} onValueChange={handleMonthChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {MONTH_NAMES.map((name, i) => (
+                <SelectItem key={i} value={(i + 1).toString()}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="grid gap-1.5 flex-1 min-w-0">
+          <label className="text-xs font-medium text-muted-foreground">
+            Ano
+          </label>
+          <Select value={selectedYear} onValueChange={handleYearChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {years.map((y) => (
+                <SelectItem key={y} value={y.toString()}>
+                  {y}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex gap-2 shrink-0">
+          <Button onClick={handleCurrentMonth} variant="outline">
+            <CalendarClock className="h-4 w-4" />
+            Mês Atual
           </Button>
-        )}
+          {hasActiveFilters && (
+            <Button onClick={clearFilters} variant="ghost" size="icon">
+              <XCircle className="h-4 w-4" />
+              <span className="sr-only">Limpar filtros</span>
+            </Button>
+          )}
+        </div>
       </div>
     </Card>
   );
