@@ -58,18 +58,18 @@
 
 ---
 
-## Sprint 4 — Dashboard & Analytics 🔲
+## Sprint 4 — Dashboard & Analytics ✅
 
-> Tela inicial com visão consolidada e gráficos.
+> **Commit:** `pending` — _feat: sprint 4 - dashboard and analytics_
 
 | #   | Tarefa                                                                                                     | Status |
 | --- | ---------------------------------------------------------------------------------------------------------- | ------ |
-| 4.1 | Redesign da home (`/`) com cards de resumo: total de dívidas ativas, valor total pendente, parcelas do mês | 🔲     |
-| 4.2 | Total de gastos por cartão (card summary)                                                                  | 🔲     |
-| 4.3 | Total de gastos por pessoa/empresa                                                                         | 🔲     |
-| 4.4 | Gráfico de evolução mensal (parcelas pagas vs pendentes ao longo do tempo)                                 | 🔲     |
-| 4.5 | Lista de próximas parcelas a vencer (upcoming installments)                                                | 🔲     |
-| 4.6 | Percentual geral de quitação das dívidas                                                                   | 🔲     |
+| 4.1 | Redesign da home (`/`) com cards de resumo: total de dívidas ativas, valor total pendente, parcelas do mês | ✅     |
+| 4.2 | Total de gastos por cartão (card summary)                                                                  | ✅     |
+| 4.3 | Total de gastos por pessoa/empresa                                                                         | ✅     |
+| 4.4 | Gráfico de evolução mensal (parcelas pagas vs pendentes ao longo do tempo)                                 | ✅     |
+| 4.5 | Lista de próximas parcelas a vencer (upcoming installments)                                                | ✅     |
+| 4.6 | Percentual geral de quitação das dívidas                                                                   | ✅     |
 
 ---
 
@@ -113,11 +113,11 @@
 | 1      | Correções Críticas         | 9/9     | ✅ Concluído |
 | 2      | Arquitetura & Qualidade    | 9/9     | ✅ Concluído |
 | 3      | UX & Feedback Visual       | 8/8     | ✅ Concluído |
-| 4      | Dashboard & Analytics      | 0/6     | 🔲 Pendente  |
+| 4      | Dashboard & Analytics      | 6/6     | ✅ Concluído |
 | 5      | Segurança & Infraestrutura | 0/7     | 🔲 Pendente  |
 | 6      | Features Avançadas         | 0/8     | 🔲 Pendente  |
 
-**Total: 26/47 tarefas concluídas (55%)**
+**Total: 32/47 tarefas concluídas (68%)**
 
 ---
 
