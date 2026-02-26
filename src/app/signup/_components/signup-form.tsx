@@ -69,7 +69,6 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 export function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const form = useForm<SignupFormValues>({
@@ -93,11 +92,12 @@ export function SignupForm() {
       {
         onRequest: () => {},
         onSuccess: () => {
-          setIsLoading(false);
           router.push('/');
         },
         onError: (ctx) => {
-          console.log('Erro ao cadastrar:', ctx.error);
+          form.setError('root', {
+            message: ctx.error.message ?? 'Erro ao cadastrar. Tente novamente.',
+          });
         },
       },
     );
@@ -106,6 +106,12 @@ export function SignupForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {form.formState.errors.root && (
+          <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+            {form.formState.errors.root.message}
+          </div>
+        )}
+
         <FormField
           control={form.control}
           name="name"
@@ -116,7 +122,7 @@ export function SignupForm() {
                 <Input
                   placeholder="Seu nome completo"
                   {...field}
-                  disabled={isLoading}
+                  disabled={form.formState.isSubmitting}
                 />
               </FormControl>
               <FormMessage />
@@ -135,7 +141,7 @@ export function SignupForm() {
                   placeholder="seu@email.com"
                   type="email"
                   {...field}
-                  disabled={isLoading}
+                  disabled={form.formState.isSubmitting}
                 />
               </FormControl>
               <FormMessage />
@@ -155,7 +161,7 @@ export function SignupForm() {
                     placeholder="••••••••"
                     type={showPassword ? 'text' : 'password'}
                     {...field}
-                    disabled={isLoading}
+                    disabled={form.formState.isSubmitting}
                   />
                   <Button
                     type="button"
@@ -163,7 +169,7 @@ export function SignupForm() {
                     size="sm"
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
-                    disabled={isLoading}
+                    disabled={form.formState.isSubmitting}
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -193,7 +199,7 @@ export function SignupForm() {
                     placeholder="••••••••"
                     type={showConfirmPassword ? 'text' : 'password'}
                     {...field}
-                    disabled={isLoading}
+                    disabled={form.formState.isSubmitting}
                   />
                   <Button
                     type="button"
@@ -201,7 +207,7 @@ export function SignupForm() {
                     size="sm"
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    disabled={isLoading}
+                    disabled={form.formState.isSubmitting}
                   >
                     {showConfirmPassword ? (
                       <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -219,7 +225,11 @@ export function SignupForm() {
           )}
         />
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={form.formState.isSubmitting}
+        >
           {form.formState.isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -245,7 +255,7 @@ export function SignupForm() {
           type="button"
           variant="outline"
           className="w-full"
-          disabled={isLoading}
+          disabled={form.formState.isSubmitting}
           onClick={() =>
             authClient.signIn.social({
               provider: 'google',

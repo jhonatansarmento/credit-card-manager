@@ -65,9 +65,9 @@ model Debt {
   creditCard           CreditCard    @relation(fields: [cardId], references: [id], onDelete: Restrict) // Restringe a exclusão se houver dívidas
   personCompanyId      String
   personCompany        PersonCompany @relation(fields: [personCompanyId], references: [id], onDelete: Restrict) // Restringe a exclusão se houver dívidas
-  totalAmount          Float
+  totalAmount          Decimal  @db.Decimal(10, 2)
   installmentsQuantity Int
-  installmentValue     Float
+  installmentValue     Decimal  @db.Decimal(10, 2)
   startDate            DateTime      @default(now()) @db.Date // Armazena apenas a data
   description          String
 
@@ -83,7 +83,7 @@ model Installment {
   debt              Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
   installmentNumber Int // 1, 2, 3...
   dueDate           DateTime @db.Date // Data de vencimento calculada para esta parcela
-  amount            Float
+  amount            Decimal  @db.Decimal(10, 2)
   isPaid            Boolean  @default(false)
 
   createdAt DateTime @default(now())

@@ -130,7 +130,7 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
     return (
       sum +
       installmentsForDisplay.reduce(
-        (installmentSum, inst) => installmentSum + inst.amount,
+        (installmentSum, inst) => installmentSum + Number(inst.amount),
         0,
       )
     );
@@ -211,12 +211,12 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                   <CardContent>
                     <p className="text-sm text-muted-foreground mb-2">
                       Valor Total:{' '}
-                      {debt.totalAmount.toLocaleString('pt-BR', {
+                      {Number(debt.totalAmount).toLocaleString('pt-BR', {
                         style: 'currency',
                         currency: 'BRL',
                       })}{' '}
                       | {debt.installmentsQuantity} Parcelas de{' '}
-                      {debt.installmentValue.toLocaleString('pt-BR', {
+                      {Number(debt.installmentValue).toLocaleString('pt-BR', {
                         style: 'currency',
                         currency: 'BRL',
                       })}
@@ -276,10 +276,13 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                                 })}
                               </p>
                               <p className="text-lg font-bold">
-                                {installment.amount.toLocaleString('pt-BR', {
-                                  style: 'currency',
-                                  currency: 'BRL',
-                                })}
+                                {Number(installment.amount).toLocaleString(
+                                  'pt-BR',
+                                  {
+                                    style: 'currency',
+                                    currency: 'BRL',
+                                  },
+                                )}
                               </p>
                               <div className="mt-2 flex gap-1">
                                 {isCurrentMonth && <Badge>Mês Atual</Badge>}

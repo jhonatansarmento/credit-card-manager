@@ -19,17 +19,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type {
-  CreditCard,
-  Debt as DebtType,
-  PersonCompany,
-} from '@prisma/client';
+import type { CreditCard, PersonCompany } from '@prisma/client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+interface SerializedDebt {
+  id: string;
+  cardId: string;
+  personCompanyId: string;
+  totalAmount: number;
+  installmentsQuantity: number;
+  installmentValue: number;
+  startDate: Date;
+  description: string;
+}
+
 interface DebtFormProps {
-  debt?: DebtType;
+  debt?: SerializedDebt;
   creditCards: CreditCard[];
   personCompanies: PersonCompany[];
 }

@@ -181,6 +181,22 @@ export async function updateDebt(
     startDate,
   );
 
+  // Fetch existing installments to preserve isPaid status
+  const existingInstallments = await prisma.installment.findMany({
+    where: { debtId: id },
+    select: { installmentNumber: true, isPaid: true },
+  });
+
+  const paidMap = new Map(
+    existingInstallments.map((inst) => [inst.installmentNumber, inst.isPaid]),
+  );
+
+  // Preserve isPaid for matching installment numbers
+  const installmentsWithStatus = installmentsData.map((inst) => ({
+    ...inst,
+    isPaid: paidMap.get(inst.installmentNumber) ?? false,
+  }));
+
   try {
     return await prisma.debt.update({
       where: { id, userId },
@@ -194,7 +210,7 @@ export async function updateDebt(
         description: payload.description,
         installments: {
           deleteMany: {},
-          createMany: { data: installmentsData },
+          createMany: { data: installmentsWithStatus },
         },
       },
     });

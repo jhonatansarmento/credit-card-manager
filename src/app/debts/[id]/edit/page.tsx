@@ -29,6 +29,13 @@ export default async function EditDebtPage({ params }: EditDebtPageProps) {
     notFound();
   }
 
+  // Convert Prisma Decimal fields to plain numbers for client component serialization
+  const serializedDebt = {
+    ...debt,
+    totalAmount: Number(debt.totalAmount),
+    installmentValue: Number(debt.installmentValue),
+  };
+
   const creditCards = await prisma.creditCard.findMany({
     where: { userId },
     orderBy: { name: 'asc' },
@@ -41,18 +48,18 @@ export default async function EditDebtPage({ params }: EditDebtPageProps) {
 
   if (creditCards.length === 0 || personCompanies.length === 0) {
     return (
-      <div className='flex flex-col min-h-screen bg-gray-100 dark:bg-gray-950'>
+      <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-950">
         <Navbar />
-        <main className='flex-1 p-4 md:p-6 flex items-center justify-center text-center'>
-          <Card className='p-6'>
-            <CardTitle className='text-xl'>Erro ao carregar dívida</CardTitle>
-            <CardContent className='mt-4'>
-              <p className='mb-2'>
+        <main className="flex-1 p-4 md:p-6 flex items-center justify-center text-center">
+          <Card className="p-6">
+            <CardTitle className="text-xl">Erro ao carregar dívida</CardTitle>
+            <CardContent className="mt-4">
+              <p className="mb-2">
                 Não foi possível carregar os dados necessários (cartões ou
                 pessoas/empresas).
               </p>
               <Button asChild>
-                <Link href='/debts'>Voltar para Dívidas</Link>
+                <Link href="/debts">Voltar para Dívidas</Link>
               </Button>
             </CardContent>
           </Card>
@@ -62,11 +69,11 @@ export default async function EditDebtPage({ params }: EditDebtPageProps) {
   }
 
   return (
-    <div className='flex flex-col min-h-screen bg-gray-100 dark:bg-gray-950'>
+    <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-950">
       <Navbar />
-      <main className='flex-1 p-4 md:p-6 flex items-center justify-center'>
+      <main className="flex-1 p-4 md:p-6 flex items-center justify-center">
         <DebtForm
-          debt={debt}
+          debt={serializedDebt}
           creditCards={creditCards}
           personCompanies={personCompanies}
         />
