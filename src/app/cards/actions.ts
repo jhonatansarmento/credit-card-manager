@@ -53,7 +53,7 @@ export async function updateCreditCard(id: string, formData: FormData) {
 
   try {
     await prisma.creditCard.update({
-      where: { id, userId }, // Garante que o usuário é o proprietário do cartão
+      where: { id, userId },
       data: {
         name,
         dueDay,
@@ -74,7 +74,6 @@ export async function deleteCreditCard(id: string) {
   const userId = session.user.id;
 
   try {
-    // Verifica se há dívidas associadas a este cartão
     const associatedDebts = await prisma.debt.count({
       where: { cardId: id, userId },
     });
@@ -86,7 +85,7 @@ export async function deleteCreditCard(id: string) {
     }
 
     await prisma.creditCard.delete({
-      where: { id, userId }, // Garante que o usuário é o proprietário do cartão
+      where: { id, userId },
     });
     revalidatePath('/cards');
   } catch (error) {
