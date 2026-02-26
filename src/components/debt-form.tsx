@@ -1,64 +1,118 @@
-"use client"
+'use client';
 
-import type React from "react"
+import type React from 'react';
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createDebt, updateDebt } from "@/app/debts/actions"
-import { useState } from "react"
-import type { CreditCard, PersonCompany, Debt as DebtType } from "@prisma/client"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import type {
+  CreditCard,
+  Debt as DebtType,
+  PersonCompany,
+} from '@prisma/client';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface DebtFormProps {
-  debt?: DebtType // Opcional, para edição
-  creditCards: CreditCard[]
-  personCompanies: PersonCompany[]
+  debt?: DebtType;
+  creditCards: CreditCard[];
+  personCompanies: PersonCompany[];
 }
 
-export default function DebtForm({ debt, creditCards, personCompanies }: DebtFormProps) {
-  const [cardId, setCardId] = useState(debt?.cardId || "")
-  const [personCompanyId, setPersonCompanyId] = useState(debt?.personCompanyId || "")
-  const [totalAmount, setTotalAmount] = useState(debt?.totalAmount.toString() || "")
-  const [installmentsQuantity, setInstallmentsQuantity] = useState(debt?.installmentsQuantity.toString() || "")
-  const [startDate, setStartDate] = useState(debt?.startDate.toISOString().split("T")[0] || "")
-  const [description, setDescription] = useState(debt?.description || "")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const router = useRouter()
+export default function DebtForm({
+  debt,
+  creditCards,
+  personCompanies,
+}: DebtFormProps) {
+  const [cardId, setCardId] = useState<string | undefined>(
+    debt?.cardId || undefined,
+  );
+  const [personCompanyId, setPersonCompanyId] = useState<string | undefined>(
+    debt?.personCompanyId || undefined,
+  );
+  const [totalAmount, setTotalAmount] = useState(
+    debt?.totalAmount.toString() || '',
+  );
+  const [installmentsQuantity, setInstallmentsQuantity] = useState(
+    debt?.installmentsQuantity.toString() || '',
+  );
+  const [startDate, setStartDate] = useState(
+    debt?.startDate.toISOString().split('T')[0] || '',
+  );
+  const [description, setDescription] = useState(debt?.description || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setIsSubmitting(true)
+    event.preventDefault();
+    setIsSubmitting(true);
 
-    const formData = new FormData(event.currentTarget)
     try {
-      if (debt) {
-        await updateDebt(debt.id, formData)
-        toast.success("Dívida atualizada com sucesso!")
-      } else {
-        await createDebt(formData)
-        toast.success("Dívida criada com sucesso!")
+      const url = debt ? `/api/debts/${debt.id}` : '/api/debts';
+      const method = debt ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cardId: cardId ?? '',
+          personCompanyId: personCompanyId ?? '',
+          totalAmount: Number(totalAmount),
+          installmentsQuantity: Number(installmentsQuantity),
+          startDate,
+          description,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Erro ao salvar a dívida.');
       }
-    } catch (error: any) {
-      toast.error(error.message || "Ocorreu um erro ao salvar a dívida.")
+
+      toast.success(
+        debt ? 'Dívida atualizada com sucesso!' : 'Dívida criada com sucesso!',
+      );
+      router.push('/debts');
+      router.refresh();
+    } catch (error: unknown) {
+      toast.error(
+        error instanceof Error ? error.message : 'Erro ao salvar a dívida.',
+      );
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <Card className="w-full max-w-lg mx-auto">
       <CardHeader>
-        <CardTitle>{debt ? "Editar Dívida" : "Nova Dívida/Despesa"}</CardTitle>
+        <CardTitle>{debt ? 'Editar Dívida' : 'Nova Dívida/Despesa'}</CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="cardId">Cartão</Label>
-            <Select name="cardId" value={cardId} onValueChange={setCardId} required>
+            <Select
+              name="cardId"
+              value={cardId}
+              onValueChange={setCardId}
+              required
+            >
               <SelectTrigger id="cardId">
                 <SelectValue placeholder="Selecione um cartão" />
               </SelectTrigger>
@@ -74,7 +128,12 @@ export default function DebtForm({ debt, creditCards, personCompanies }: DebtFor
 
           <div className="grid gap-2">
             <Label htmlFor="personCompanyId">Pessoa/Empresa</Label>
-            <Select name="personCompanyId" value={personCompanyId} onValueChange={setPersonCompanyId} required>
+            <Select
+              name="personCompanyId"
+              value={personCompanyId}
+              onValueChange={setPersonCompanyId}
+              required
+            >
               <SelectTrigger id="personCompanyId">
                 <SelectValue placeholder="Selecione uma pessoa/empresa" />
               </SelectTrigger>
@@ -125,7 +184,9 @@ export default function DebtForm({ debt, creditCards, personCompanies }: DebtFor
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
             />
-            <p className="text-sm text-muted-foreground">Deixe em branco para usar o mês atual como início.</p>
+            <p className="text-sm text-muted-foreground">
+              Deixe em branco para usar o mês atual como início.
+            </p>
           </div>
 
           <div className="grid gap-2">
@@ -141,14 +202,18 @@ export default function DebtForm({ debt, creditCards, personCompanies }: DebtFor
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
+          <Button
+            variant="outline"
+            onClick={() => router.back()}
+            disabled={isSubmitting}
+          >
             Cancelar
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Salvando..." : "Salvar Dívida"}
+            {isSubmitting ? 'Salvando...' : 'Salvar Dívida'}
           </Button>
         </CardFooter>
       </form>
     </Card>
-  )
+  );
 }

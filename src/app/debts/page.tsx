@@ -1,6 +1,7 @@
 import DebtFilters from '@/components/debt-filters';
 import DeleteButton from '@/components/delete-button';
 import Navbar from '@/components/navbar';
+import ToggleInstallmentButton from '@/components/toggle-installment-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,21 +11,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { getAuthSession } from '@/lib/auth-session';
 import prisma from '@/lib/db';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CheckCircle, CircleDashed, Pencil, PlusCircle } from 'lucide-react';
+import { Pencil, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { deleteDebt, toggleInstallmentPaidStatus } from './actions';
 
 interface DebtsPageProps {
   searchParams: Promise<{
@@ -132,15 +125,15 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
   }, 0);
 
   return (
-    <div className='flex flex-col min-h-screen bg-gray-100 dark:bg-gray-950'>
+    <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-950">
       <Navbar />
-      <main className='flex-1 p-4 md:p-6'>
-        <div className='max-w-6xl mx-auto grid gap-6'>
-          <div className='flex items-center justify-between'>
-            <h1 className='text-3xl font-bold'>Minhas Dívidas</h1>
+      <main className="flex-1 p-4 md:p-6">
+        <div className="max-w-6xl mx-auto grid gap-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Minhas Dívidas</h1>
             <Button asChild>
-              <Link href='/debts/new'>
-                <PlusCircle className='h-4 w-4 mr-2' />
+              <Link href="/debts/new">
+                <PlusCircle className="h-4 w-4 mr-2" />
                 Nova Dívida
               </Link>
             </Button>
@@ -158,20 +151,20 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
           </Suspense>
 
           {debts.length === 0 ? (
-            <Card className='p-6 text-center'>
-              <CardTitle className='text-xl'>
+            <Card className="p-6 text-center">
+              <CardTitle className="text-xl">
                 Nenhuma dívida encontrada
               </CardTitle>
-              <CardDescription className='mt-2'>
+              <CardDescription className="mt-2">
                 Ajuste seus filtros ou cadastre uma nova dívida.
               </CardDescription>
             </Card>
           ) : (
             <>
-              <Card className='p-4'>
-                <CardTitle className='text-2xl'>
+              <Card className="p-4">
+                <CardTitle className="text-2xl">
                   Total de Dívidas Exibidas:{' '}
-                  <span className='font-bold text-primary'>
+                  <span className="font-bold text-primary">
                     {totalAmountDisplayed.toLocaleString('pt-BR', {
                       style: 'currency',
                       currency: 'BRL',
@@ -181,25 +174,25 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
               </Card>
 
               {debts.map((debt) => (
-                <Card key={debt.id} className='mb-4'>
-                  <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-                    <CardTitle className='text-lg font-medium'>
+                <Card key={debt.id} className="mb-4">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-lg font-medium">
                       {debt.description}
                     </CardTitle>
-                    <div className='flex items-center gap-2'>
-                      <Badge variant='secondary'>{debt.creditCard.name}</Badge>
-                      <Badge variant='outline'>{debt.personCompany.name}</Badge>
-                      <Button variant='outline' size='icon' asChild>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">{debt.creditCard.name}</Badge>
+                      <Badge variant="outline">{debt.personCompany.name}</Badge>
+                      <Button variant="outline" size="icon" asChild>
                         <Link href={`/debts/${debt.id}/edit`}>
-                          <Pencil className='h-4 w-4' />
-                          <span className='sr-only'>Editar Dívida</span>
+                          <Pencil className="h-4 w-4" />
+                          <span className="sr-only">Editar Dívida</span>
                         </Link>
                       </Button>
-                      <DeleteButton itemId={debt.id} action={deleteDebt} />
+                      <DeleteButton endpoint={`/api/debts/${debt.id}`} />
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className='text-sm text-muted-foreground mb-2'>
+                    <p className="text-sm text-muted-foreground mb-2">
                       Valor Total:{' '}
                       {debt.totalAmount.toLocaleString('pt-BR', {
                         style: 'currency',
@@ -212,8 +205,8 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                       })}
                     </p>
 
-                    <h3 className='font-semibold mb-2'>Parcelas:</h3>
-                    <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3'>
+                    <h3 className="font-semibold mb-2">Parcelas:</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                       {debt.installments
                         .filter((inst) => {
                           // Filtra as parcelas para exibição com base no filtro de mês/ano
@@ -248,80 +241,31 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                                   : ''
                               }`}
                             >
-                              <div className='flex items-center justify-between mb-2'>
-                                <p className='font-medium'>
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="font-medium">
                                   Parcela {installment.installmentNumber}
                                 </p>
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <Button
-                                      variant='ghost'
-                                      size='icon'
-                                      className={
-                                        installment.isPaid
-                                          ? 'text-green-500'
-                                          : 'text-gray-400'
-                                      }
-                                    >
-                                      {installment.isPaid ? (
-                                        <CheckCircle className='h-6 w-6' />
-                                      ) : (
-                                        <CircleDashed className='h-6 w-6' />
-                                      )}
-                                      <span className='sr-only'>
-                                        {installment.isPaid
-                                          ? 'Parcela Paga'
-                                          : 'Parcela a Pagar'}
-                                      </span>
-                                    </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className='w-auto p-2'>
-                                    <form
-                                      action={toggleInstallmentPaidStatus.bind(
-                                        null,
-                                        installment.id,
-                                        installment.isPaid,
-                                      )}
-                                    >
-                                      <Button
-                                        type='submit'
-                                        variant='ghost'
-                                        className='w-full justify-start'
-                                      >
-                                        <Checkbox
-                                          checked={installment.isPaid}
-                                          className='mr-2'
-                                          id={`toggle-${installment.id}`}
-                                        />
-                                        <Label
-                                          htmlFor={`toggle-${installment.id}`}
-                                        >
-                                          Marcar como{' '}
-                                          {installment.isPaid
-                                            ? 'Não Paga'
-                                            : 'Paga'}
-                                        </Label>
-                                      </Button>
-                                    </form>
-                                  </PopoverContent>
-                                </Popover>
+                                <ToggleInstallmentButton
+                                  installmentId={installment.id}
+                                  isPaid={installment.isPaid}
+                                />
                               </div>
-                              <p className='text-sm text-muted-foreground'>
+                              <p className="text-sm text-muted-foreground">
                                 Vencimento:{' '}
                                 {format(installment.dueDate, 'dd/MM/yyyy', {
                                   locale: ptBR,
                                 })}
                               </p>
-                              <p className='text-lg font-bold'>
+                              <p className="text-lg font-bold">
                                 {installment.amount.toLocaleString('pt-BR', {
                                   style: 'currency',
                                   currency: 'BRL',
                                 })}
                               </p>
-                              <div className='mt-2 flex gap-1'>
+                              <div className="mt-2 flex gap-1">
                                 {isCurrentMonth && <Badge>Mês Atual</Badge>}
                                 {isOverdue && (
-                                  <Badge variant='destructive'>Vencida</Badge>
+                                  <Badge variant="destructive">Vencida</Badge>
                                 )}
                               </div>
                             </Card>

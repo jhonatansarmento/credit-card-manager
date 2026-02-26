@@ -19,7 +19,6 @@ import { getAuthSession } from '@/lib/auth-session';
 import prisma from '@/lib/db';
 import { Pencil, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
-import { deleteCreditCard } from './actions';
 
 export default async function CreditCardsPage() {
   const session = await getAuthSession();
@@ -31,59 +30,56 @@ export default async function CreditCardsPage() {
   });
 
   return (
-    <div className='flex flex-col min-h-screen bg-gray-100 dark:bg-gray-950'>
+    <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-950">
       <Navbar />
-      <main className='flex-1 p-4 md:p-6'>
-        <div className='max-w-6xl mx-auto grid gap-6'>
-          <div className='flex items-center justify-between'>
-            <h1 className='text-3xl font-bold'>Meus Cartões de Crédito</h1>
+      <main className="flex-1 p-4 md:p-6">
+        <div className="max-w-6xl mx-auto grid gap-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Meus Cartões de Crédito</h1>
             <Button asChild>
-              <Link href='/cards/new'>
-                <PlusCircle className='h-4 w-4 mr-2' />
+              <Link href="/cards/new">
+                <PlusCircle className="h-4 w-4 mr-2" />
                 Novo Cartão
               </Link>
             </Button>
           </div>
 
           {creditCards.length === 0 ? (
-            <Card className='p-6 text-center'>
-              <CardTitle className='text-xl'>
+            <Card className="p-6 text-center">
+              <CardTitle className="text-xl">
                 Nenhum cartão cadastrado
               </CardTitle>
-              <CardDescription className='mt-2'>
+              <CardDescription className="mt-2">
                 Comece adicionando seu primeiro cartão de crédito.
               </CardDescription>
             </Card>
           ) : (
             <Card>
-              <CardContent className='p-0'>
+              <CardContent className="p-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nome do Cartão</TableHead>
                       <TableHead>Dia de Vencimento</TableHead>
-                      <TableHead className='text-right'>Ações</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {creditCards.map((card) => (
                       <TableRow key={card.id}>
-                        <TableCell className='font-medium'>
+                        <TableCell className="font-medium">
                           {card.name}
                         </TableCell>
                         <TableCell>{card.dueDay}</TableCell>
-                        <TableCell className='text-right'>
-                          <div className='flex justify-end gap-2'>
-                            <Button variant='outline' size='icon' asChild>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" size="icon" asChild>
                               <Link href={`/cards/${card.id}/edit`}>
-                                <Pencil className='h-4 w-4' />
-                                <span className='sr-only'>Editar</span>
+                                <Pencil className="h-4 w-4" />
+                                <span className="sr-only">Editar</span>
                               </Link>
                             </Button>
-                            <DeleteButton
-                              itemId={card.id}
-                              action={deleteCreditCard}
-                            />
+                            <DeleteButton endpoint={`/api/cards/${card.id}`} />
                           </div>
                         </TableCell>
                       </TableRow>

@@ -2,7 +2,6 @@
 
 import type React from 'react';
 
-import { createPersonCompany, updatePersonCompany } from '@/app/names/actions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -19,7 +18,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 interface PersonCompanyFormProps {
-  personCompany?: PersonCompanyType; // Opcional, para edição
+  personCompany?: PersonCompanyType;
 }
 
 export default function PersonCompanyForm({
@@ -33,52 +32,69 @@ export default function PersonCompanyForm({
     event.preventDefault();
     setIsSubmitting(true);
 
-    const formData = new FormData(event.currentTarget);
     try {
-      if (personCompany) {
-        await updatePersonCompany(personCompany.id, formData);
-        toast.success('Nome atualizado com sucesso!');
-      } else {
-        await createPersonCompany(formData);
-        toast.success('Nome criado com sucesso!');
+      const url = personCompany
+        ? `/api/names/${personCompany.id}`
+        : '/api/names';
+      const method = personCompany ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Erro ao salvar o nome.');
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Ocorreu um erro ao salvar o nome.');
+
+      toast.success(
+        personCompany
+          ? 'Nome atualizado com sucesso!'
+          : 'Nome criado com sucesso!',
+      );
+      router.push('/names');
+      router.refresh();
+    } catch (error: unknown) {
+      toast.error(
+        error instanceof Error ? error.message : 'Erro ao salvar o nome.',
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Card className='w-full max-w-md mx-auto'>
+    <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle>
           {personCompany ? 'Editar Nome' : 'Novo Nome (Pessoa/Empresa)'}
         </CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit}>
-        <CardContent className='grid gap-4'>
-          <div className='grid gap-2'>
-            <Label htmlFor='name'>Nome</Label>
+        <CardContent className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="name">Nome</Label>
             <Input
-              id='name'
-              name='name'
-              placeholder='Ex: João, Empresa X'
+              id="name"
+              name="name"
+              placeholder="Ex: João, Empresa X"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
             />
           </div>
         </CardContent>
-        <CardFooter className='flex justify-between'>
+        <CardFooter className="flex justify-between">
           <Button
-            variant='outline'
+            variant="outline"
             onClick={() => router.back()}
             disabled={isSubmitting}
           >
             Cancelar
           </Button>
-          <Button type='submit' disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Salvando...' : 'Salvar Nome'}
           </Button>
         </CardFooter>

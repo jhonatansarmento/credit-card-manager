@@ -43,9 +43,9 @@ export default function DebtFilters({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [selectedCardId, setSelectedCardId] = useState(initialCardId || '');
+  const [selectedCardId, setSelectedCardId] = useState(initialCardId || 'all');
   const [selectedPersonCompanyId, setSelectedPersonCompanyId] = useState(
-    initialPersonCompanyId || '',
+    initialPersonCompanyId || 'all',
   );
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     initialMonth && initialYear
@@ -58,8 +58,8 @@ export default function DebtFilters({
   );
 
   useEffect(() => {
-    setSelectedCardId(initialCardId || '');
-    setSelectedPersonCompanyId(initialPersonCompanyId || '');
+    setSelectedCardId(initialCardId || 'all');
+    setSelectedPersonCompanyId(initialPersonCompanyId || 'all');
     setSelectedDate(
       initialMonth && initialYear
         ? new Date(
@@ -73,12 +73,12 @@ export default function DebtFilters({
 
   const applyFilters = () => {
     const params = new URLSearchParams(searchParams.toString());
-    if (selectedCardId) {
+    if (selectedCardId && selectedCardId !== 'all') {
       params.set('cardId', selectedCardId);
     } else {
       params.delete('cardId');
     }
-    if (selectedPersonCompanyId) {
+    if (selectedPersonCompanyId && selectedPersonCompanyId !== 'all') {
       params.set('personCompanyId', selectedPersonCompanyId);
     } else {
       params.delete('personCompanyId');
@@ -94,24 +94,24 @@ export default function DebtFilters({
   };
 
   const clearFilters = () => {
-    setSelectedCardId('');
-    setSelectedPersonCompanyId('');
+    setSelectedCardId('all');
+    setSelectedPersonCompanyId('all');
     setSelectedDate(undefined);
     router.push('/debts');
   };
 
   return (
-    <Card className='p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-end'>
-      <div className='grid gap-2'>
-        <label htmlFor='filterCard' className='text-sm font-medium'>
+    <Card className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+      <div className="grid gap-2">
+        <label htmlFor="filterCard" className="text-sm font-medium">
           Filtrar por Cartão
         </label>
         <Select value={selectedCardId} onValueChange={setSelectedCardId}>
-          <SelectTrigger id='filterCard'>
-            <SelectValue placeholder='Todos os Cartões' />
+          <SelectTrigger id="filterCard">
+            <SelectValue placeholder="Todos os Cartões" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value=''>Todos os Cartões</SelectItem>
+            <SelectItem value="all">Todos os Cartões</SelectItem>
             {creditCards.map((card) => (
               <SelectItem key={card.id} value={card.id}>
                 {card.name}
@@ -121,19 +121,19 @@ export default function DebtFilters({
         </Select>
       </div>
 
-      <div className='grid gap-2'>
-        <label htmlFor='filterPersonCompany' className='text-sm font-medium'>
+      <div className="grid gap-2">
+        <label htmlFor="filterPersonCompany" className="text-sm font-medium">
           Filtrar por Pessoa/Empresa
         </label>
         <Select
           value={selectedPersonCompanyId}
           onValueChange={setSelectedPersonCompanyId}
         >
-          <SelectTrigger id='filterPersonCompany'>
-            <SelectValue placeholder='Todas as Pessoas/Empresas' />
+          <SelectTrigger id="filterPersonCompany">
+            <SelectValue placeholder="Todas as Pessoas/Empresas" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value=''>Todas as Pessoas/Empresas</SelectItem>
+            <SelectItem value="all">Todas as Pessoas/Empresas</SelectItem>
             {personCompanies.map((pc) => (
               <SelectItem key={pc.id} value={pc.id}>
                 {pc.name}
@@ -143,8 +143,8 @@ export default function DebtFilters({
         </Select>
       </div>
 
-      <div className='grid gap-2'>
-        <label htmlFor='filterMonthYear' className='text-sm font-medium'>
+      <div className="grid gap-2">
+        <label htmlFor="filterMonthYear" className="text-sm font-medium">
           Filtrar por Mês/Ano
         </label>
         <Popover>
@@ -153,7 +153,7 @@ export default function DebtFilters({
               variant={'outline'}
               className={'w-full justify-start text-left font-normal'}
             >
-              <CalendarIcon className='mr-2 h-4 w-4' />
+              <CalendarIcon className="mr-2 h-4 w-4" />
               {selectedDate ? (
                 format(selectedDate, 'MMMM yyyy', { locale: ptBR })
               ) : (
@@ -161,13 +161,13 @@ export default function DebtFilters({
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className='w-auto p-0'>
+          <PopoverContent className="w-auto p-0">
             <Calendar
-              mode='single'
+              mode="single"
               selected={selectedDate}
               onSelect={setSelectedDate}
               initialFocus
-              captionLayout='dropdown'
+              captionLayout="dropdown"
               fromYear={2020}
               toYear={new Date().getFullYear() + 5}
             />
@@ -175,18 +175,18 @@ export default function DebtFilters({
         </Popover>
       </div>
 
-      <div className='flex gap-2'>
-        <Button onClick={applyFilters} className='w-full'>
-          <Filter className='h-4 w-4 mr-2' />
+      <div className="flex gap-2">
+        <Button onClick={applyFilters} className="w-full">
+          <Filter className="h-4 w-4 mr-2" />
           Aplicar Filtros
         </Button>
         {(selectedCardId || selectedPersonCompanyId || selectedDate) && (
           <Button
             onClick={clearFilters}
-            variant='outline'
-            className='w-full bg-transparent'
+            variant="outline"
+            className="w-full bg-transparent"
           >
-            <XCircle className='h-4 w-4 mr-2' />
+            <XCircle className="h-4 w-4 mr-2" />
             Limpar
           </Button>
         )}
