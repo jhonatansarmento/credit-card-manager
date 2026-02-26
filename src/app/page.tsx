@@ -28,12 +28,14 @@ const HomePage = async () => {
                   <CreditCard className='h-5 w-5' /> Cartões de Crédito
                 </CardTitle>
               </CardHeader>
-              <p className='text-gray-500 dark:text-gray-400 mb-4'>
-                Cadastre e gerencie seus cartões de crédito.
-              </p>
-              <Button asChild>
-                <Link href='/cards'>Gerenciar Cartões</Link>
-              </Button>
+              <CardContent>
+                <p className='text-gray-500 dark:text-gray-400 mb-4'>
+                  Cadastre e gerencie seus cartões de crédito.
+                </p>
+                <Button asChild>
+                  <Link href='/cards'>Gerenciar Cartões</Link>
+                </Button>
+              </CardContent>
             </Card>
 
             <Card>
