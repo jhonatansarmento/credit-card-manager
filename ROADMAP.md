@@ -43,7 +43,7 @@
 
 ## Sprint 3 — UX & Feedback Visual ✅
 
-> **Commit:** `pending` — _feat: sprint 3 - UX and feedback visual improvements_
+> **Commit:** `d441563` — _feat: sprint 3 - UX and feedback visual improvements_
 
 | #   | Tarefa                                                                                                                       | Status |
 | --- | ---------------------------------------------------------------------------------------------------------------------------- | ------ |
