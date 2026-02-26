@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/table';
 import { getAuthSession } from '@/lib/auth-session';
 import { listCreditCards } from '@/services/credit-card.service';
-import { Pencil, PlusCircle } from 'lucide-react';
+import { CreditCard, Pencil, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function CreditCardsPage() {
@@ -39,11 +39,27 @@ export default async function CreditCardsPage() {
       </div>
 
       {creditCards.length === 0 ? (
-        <Card className="p-6 text-center">
-          <CardTitle className="text-xl">Nenhum cartão cadastrado</CardTitle>
-          <CardDescription className="mt-2">
-            Comece adicionando seu primeiro cartão de crédito.
-          </CardDescription>
+        <Card className="p-10 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted">
+              <CreditCard className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <div>
+              <CardTitle className="text-xl">
+                Nenhum cartão cadastrado
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Comece adicionando seu primeiro cartão de crédito para registrar
+                suas dívidas.
+              </CardDescription>
+            </div>
+            <Button asChild className="mt-2">
+              <Link href="/cards/new">
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Adicionar Primeiro Cartão
+              </Link>
+            </Button>
+          </div>
         </Card>
       ) : (
         <Card>

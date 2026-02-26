@@ -1,3 +1,4 @@
+import { PageBreadcrumb } from '@/components/page-breadcrumb';
 import PersonCompanyForm from '@/components/person-company-form';
 import { getAuthSession } from '@/lib/auth-session';
 import { getName } from '@/services/name.service';
@@ -23,8 +24,16 @@ export default async function EditPersonCompanyPage({
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center">
-      <PersonCompanyForm personCompany={personCompany} />
+    <div className="flex-1 flex flex-col">
+      <PageBreadcrumb
+        segments={[
+          { label: 'Nomes', href: '/names' },
+          { label: 'Editar Nome' },
+        ]}
+      />
+      <div className="flex-1 flex items-center justify-center">
+        <PersonCompanyForm personCompany={personCompany} />
+      </div>
     </div>
   );
 }

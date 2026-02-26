@@ -1,4 +1,5 @@
 import DebtForm from '@/components/debt-form';
+import { PageBreadcrumb } from '@/components/page-breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { getAuthSession } from '@/lib/auth-session';
@@ -57,12 +58,20 @@ export default async function EditDebtPage({ params }: EditDebtPageProps) {
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center">
-      <DebtForm
-        debt={serializedDebt}
-        creditCards={creditCards}
-        personCompanies={personCompanies}
+    <div className="flex-1 flex flex-col">
+      <PageBreadcrumb
+        segments={[
+          { label: 'Dívidas', href: '/debts' },
+          { label: 'Editar Dívida' },
+        ]}
       />
+      <div className="flex-1 flex items-center justify-center">
+        <DebtForm
+          debt={serializedDebt}
+          creditCards={creditCards}
+          personCompanies={personCompanies}
+        />
+      </div>
     </div>
   );
 }

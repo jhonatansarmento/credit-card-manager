@@ -1,4 +1,5 @@
 import CreditCardForm from '@/components/credit-card-form';
+import { PageBreadcrumb } from '@/components/page-breadcrumb';
 import { getAuthSession } from '@/lib/auth-session';
 import { getCreditCard } from '@/services/credit-card.service';
 import { notFound } from 'next/navigation';
@@ -23,8 +24,16 @@ export default async function EditCreditCardPage({
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center">
-      <CreditCardForm card={card} />
+    <div className="flex-1 flex flex-col">
+      <PageBreadcrumb
+        segments={[
+          { label: 'Cartões', href: '/cards' },
+          { label: 'Editar Cartão' },
+        ]}
+      />
+      <div className="flex-1 flex items-center justify-center">
+        <CreditCardForm card={card} />
+      </div>
     </div>
   );
 }

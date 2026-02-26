@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/table';
 import { getAuthSession } from '@/lib/auth-session';
 import { listNames } from '@/services/name.service';
-import { Pencil, PlusCircle } from 'lucide-react';
+import { Pencil, PlusCircle, Users } from 'lucide-react';
 import Link from 'next/link';
 
 import DeleteButton from '@/components/delete-button';
@@ -39,12 +39,24 @@ export default async function PersonCompaniesPage() {
       </div>
 
       {personCompanies.length === 0 ? (
-        <Card className="p-6 text-center">
-          <CardTitle className="text-xl">Nenhum nome cadastrado</CardTitle>
-          <CardDescription className="mt-2">
-            Comece adicionando pessoas ou empresas para associar às suas
-            dívidas.
-          </CardDescription>
+        <Card className="p-10 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted">
+              <Users className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <div>
+              <CardTitle className="text-xl">Nenhum nome cadastrado</CardTitle>
+              <CardDescription className="mt-2">
+                Cadastre pessoas ou empresas para associar às suas dívidas.
+              </CardDescription>
+            </div>
+            <Button asChild className="mt-2">
+              <Link href="/names/new">
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Adicionar Primeiro Nome
+              </Link>
+            </Button>
+          </div>
         </Card>
       ) : (
         <Card>

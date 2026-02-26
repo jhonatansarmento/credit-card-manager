@@ -41,20 +41,20 @@
 
 ---
 
-## Sprint 3 — UX & Feedback Visual 🔲
+## Sprint 3 — UX & Feedback Visual ✅
 
-> Melhorar a experiência do usuário com loading states, empty states e feedback visual.
+> **Commit:** `pending` — _feat: sprint 3 - UX and feedback visual improvements_
 
 | #   | Tarefa                                                                                                                       | Status |
 | --- | ---------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 3.1 | Adicionar skeletons de loading nas listagens (cards, names, debts) usando `Suspense` + `loading.tsx` ou componentes skeleton | 🔲     |
-| 3.2 | Melhorar empty states com ilustrações/ícones e CTAs mais claros                                                              | 🔲     |
-| 3.3 | Adicionar indicador de parcelas pagas vs total em cada dívida (ex: "3/12 pagas")                                             | 🔲     |
-| 3.4 | Barra de progresso visual nas parcelas de cada dívida                                                                        | 🔲     |
-| 3.5 | Formatação de moeda brasileira (R$) nos valores monetários                                                                   | 🔲     |
-| 3.6 | Highlight visual na parcela do mês atual na tabela de parcelas                                                               | 🔲     |
-| 3.7 | Breadcrumbs nas páginas internas (edit, new)                                                                                 | 🔲     |
-| 3.8 | Feedback de "nenhum resultado" nos filtros de dívidas                                                                        | 🔲     |
+| 3.1 | Adicionar skeletons de loading nas listagens (cards, names, debts) usando `Suspense` + `loading.tsx` ou componentes skeleton | ✅     |
+| 3.2 | Melhorar empty states com ilustrações/ícones e CTAs mais claros                                                              | ✅     |
+| 3.3 | Adicionar indicador de parcelas pagas vs total em cada dívida (ex: "3/12 pagas")                                             | ✅     |
+| 3.4 | Barra de progresso visual nas parcelas de cada dívida                                                                        | ✅     |
+| 3.5 | Formatação de moeda brasileira (R$) nos valores monetários                                                                   | ✅     |
+| 3.6 | Highlight visual na parcela do mês atual na tabela de parcelas                                                               | ✅     |
+| 3.7 | Breadcrumbs nas páginas internas (edit, new)                                                                                 | ✅     |
+| 3.8 | Feedback de "nenhum resultado" nos filtros de dívidas                                                                        | ✅     |
 
 ---
 
@@ -112,12 +112,12 @@
 | ------ | -------------------------- | ------- | ------------ |
 | 1      | Correções Críticas         | 9/9     | ✅ Concluído |
 | 2      | Arquitetura & Qualidade    | 9/9     | ✅ Concluído |
-| 3      | UX & Feedback Visual       | 0/8     | 🔲 Pendente  |
+| 3      | UX & Feedback Visual       | 8/8     | ✅ Concluído |
 | 4      | Dashboard & Analytics      | 0/6     | 🔲 Pendente  |
 | 5      | Segurança & Infraestrutura | 0/7     | 🔲 Pendente  |
 | 6      | Features Avançadas         | 0/8     | 🔲 Pendente  |
 
-**Total: 18/47 tarefas concluídas (38%)**
+**Total: 26/47 tarefas concluídas (55%)**
 
 ---
 
