@@ -60,7 +60,7 @@
 
 ## Sprint 4 — Dashboard & Analytics ✅
 
-> **Commit:** `pending` — _feat: sprint 4 - dashboard and analytics_
+> **Commit:** `2451487` — _feat: sprint 4 - dashboard and analytics_
 
 | #   | Tarefa                                                                                                     | Status |
 | --- | ---------------------------------------------------------------------------------------------------------- | ------ |
