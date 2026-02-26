@@ -1,7 +1,6 @@
-import Navbar from '@/components/navbar';
 import PersonCompanyForm from '@/components/person-company-form';
 import { getAuthSession } from '@/lib/auth-session';
-import prisma from '@/lib/db';
+import { getName } from '@/services/name.service';
 import { notFound } from 'next/navigation';
 
 interface EditPersonCompanyPageProps {
@@ -17,23 +16,15 @@ export default async function EditPersonCompanyPage({
   const session = await getAuthSession();
   const userId = session.user.id;
 
-  const personCompany = await prisma.personCompany.findUnique({
-    where: {
-      id,
-      userId: userId, // Garante que o usuário é o proprietário do registro
-    },
-  });
+  const personCompany = await getName(id, userId);
 
   if (!personCompany) {
     notFound();
   }
 
   return (
-    <div className='flex flex-col min-h-screen bg-gray-100 dark:bg-gray-950'>
-      <Navbar />
-      <main className='flex-1 p-4 md:p-6 flex items-center justify-center'>
-        <PersonCompanyForm personCompany={personCompany} />
-      </main>
+    <div className="flex-1 flex items-center justify-center">
+      <PersonCompanyForm personCompany={personCompany} />
     </div>
   );
 }

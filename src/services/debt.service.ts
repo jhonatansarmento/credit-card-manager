@@ -1,4 +1,5 @@
 import prisma from '@/lib/db';
+import { Prisma } from '@prisma/client';
 
 export interface DebtPayload {
   cardId: string;
@@ -98,23 +99,43 @@ function validateDebtPayload(payload: DebtPayload) {
   }
 }
 
+export async function getDebt(id: string, userId: string) {
+  return prisma.debt.findUnique({
+    where: { id, userId },
+  });
+}
+
 export async function listDebts(userId: string, filters: DebtFilters = {}) {
   const { cardId, personCompanyId, month, year } = filters;
-  const whereClause: Record<string, unknown> = { userId };
+  const whereClause: Prisma.DebtWhereInput = { userId };
 
   if (cardId) whereClause.cardId = cardId;
   if (personCompanyId) whereClause.personCompanyId = personCompanyId;
 
-  if (month && year) {
-    const startOfMonth = new Date(parseInt(year), parseInt(month) - 1, 1);
-    const endOfMonth = new Date(parseInt(year), parseInt(month), 0);
+  if (month || year) {
+    const parsedYear = year ? parseInt(year) : undefined;
+    const parsedMonth = month ? parseInt(month) : undefined;
+
+    let startDate: Date;
+    let endDate: Date;
+
+    if (parsedYear && parsedMonth) {
+      startDate = new Date(parsedYear, parsedMonth - 1, 1);
+      endDate = new Date(parsedYear, parsedMonth, 0);
+    } else if (parsedYear) {
+      startDate = new Date(parsedYear, 0, 1);
+      endDate = new Date(parsedYear, 11, 31);
+    } else {
+      const currentYear = new Date().getFullYear();
+      startDate = new Date(currentYear, parsedMonth! - 1, 1);
+      endDate = new Date(currentYear, parsedMonth!, 0);
+    }
 
     const debtsWithInstallments = await prisma.debt.findMany({
       where: {
-        userId,
         ...whereClause,
         installments: {
-          some: { dueDate: { gte: startOfMonth, lte: endOfMonth } },
+          some: { dueDate: { gte: startDate, lte: endDate } },
         },
       },
       select: { id: true },

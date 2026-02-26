@@ -1,6 +1,9 @@
 'use client';
 
-import type React from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -10,8 +13,16 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -19,10 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { debtSchema, type DebtFormData } from '@/lib/schemas/debt';
 import type { CreditCard, PersonCompany } from '@prisma/client';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { toast } from 'sonner';
 
 interface SerializedDebt {
   id: string;
@@ -46,29 +55,23 @@ export default function DebtForm({
   creditCards,
   personCompanies,
 }: DebtFormProps) {
-  const [cardId, setCardId] = useState<string | undefined>(
-    debt?.cardId || undefined,
-  );
-  const [personCompanyId, setPersonCompanyId] = useState<string | undefined>(
-    debt?.personCompanyId || undefined,
-  );
-  const [totalAmount, setTotalAmount] = useState(
-    debt?.totalAmount.toString() || '',
-  );
-  const [installmentsQuantity, setInstallmentsQuantity] = useState(
-    debt?.installmentsQuantity.toString() || '',
-  );
-  const [startDate, setStartDate] = useState(
-    debt?.startDate.toISOString().split('T')[0] || '',
-  );
-  const [description, setDescription] = useState(debt?.description || '');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setIsSubmitting(true);
+  const form = useForm<DebtFormData>({
+    resolver: zodResolver(debtSchema),
+    defaultValues: {
+      cardId: debt?.cardId ?? '',
+      personCompanyId: debt?.personCompanyId ?? '',
+      totalAmount: debt?.totalAmount ?? undefined,
+      installmentsQuantity: debt?.installmentsQuantity ?? undefined,
+      startDate: debt?.startDate
+        ? debt.startDate.toISOString().split('T')[0]
+        : '',
+      description: debt?.description ?? '',
+    },
+  });
 
+  const onSubmit = async (data: DebtFormData) => {
     try {
       const url = debt ? `/api/debts/${debt.id}` : '/api/debts';
       const method = debt ? 'PUT' : 'POST';
@@ -76,19 +79,12 @@ export default function DebtForm({
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cardId: cardId ?? '',
-          personCompanyId: personCompanyId ?? '',
-          totalAmount: Number(totalAmount),
-          installmentsQuantity: Number(installmentsQuantity),
-          startDate,
-          description,
-        }),
+        body: JSON.stringify(data),
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Erro ao salvar a dívida.');
+        const body = await res.json();
+        throw new Error(body.error || 'Erro ao salvar a dívida.');
       }
 
       toast.success(
@@ -100,8 +96,6 @@ export default function DebtForm({
       toast.error(
         error instanceof Error ? error.message : 'Erro ao salvar a dívida.',
       );
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -110,117 +104,160 @@ export default function DebtForm({
       <CardHeader>
         <CardTitle>{debt ? 'Editar Dívida' : 'Nova Dívida/Despesa'}</CardTitle>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="cardId">Cartão</Label>
-            <Select
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <CardContent className="grid gap-4">
+            <FormField
+              control={form.control}
               name="cardId"
-              value={cardId}
-              onValueChange={setCardId}
-              required
-            >
-              <SelectTrigger id="cardId">
-                <SelectValue placeholder="Selecione um cartão" />
-              </SelectTrigger>
-              <SelectContent>
-                {creditCards.map((card) => (
-                  <SelectItem key={card.id} value={card.id}>
-                    {card.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cartão</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um cartão" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {creditCards.map((card) => (
+                        <SelectItem key={card.id} value={card.id}>
+                          {card.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <div className="grid gap-2">
-            <Label htmlFor="personCompanyId">Pessoa/Empresa</Label>
-            <Select
+            <FormField
+              control={form.control}
               name="personCompanyId"
-              value={personCompanyId}
-              onValueChange={setPersonCompanyId}
-              required
-            >
-              <SelectTrigger id="personCompanyId">
-                <SelectValue placeholder="Selecione uma pessoa/empresa" />
-              </SelectTrigger>
-              <SelectContent>
-                {personCompanies.map((pc) => (
-                  <SelectItem key={pc.id} value={pc.id}>
-                    {pc.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Pessoa/Empresa</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma pessoa/empresa" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {personCompanies.map((pc) => (
+                        <SelectItem key={pc.id} value={pc.id}>
+                          {pc.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <div className="grid gap-2">
-            <Label htmlFor="totalAmount">Valor Total da Dívida</Label>
-            <Input
-              id="totalAmount"
+            <FormField
+              control={form.control}
               name="totalAmount"
-              type="number"
-              step="0.01"
-              placeholder="Ex: 1200.50"
-              value={totalAmount}
-              onChange={(e) => setTotalAmount(e.target.value)}
-              required
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Valor Total da Dívida</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="Ex: 1200.50"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="installmentsQuantity">Quantidade de Parcelas</Label>
-            <Input
-              id="installmentsQuantity"
+            <FormField
+              control={form.control}
               name="installmentsQuantity"
-              type="number"
-              min="1"
-              placeholder="Ex: 12"
-              value={installmentsQuantity}
-              onChange={(e) => setInstallmentsQuantity(e.target.value)}
-              required
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Quantidade de Parcelas</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="Ex: 12"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="startDate">Data de Início (Opcional)</Label>
-            <Input
-              id="startDate"
+            <FormField
+              control={form.control}
               name="startDate"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Data de Início (Opcional)</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Deixe em branco para usar o mês atual como início.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            <p className="text-sm text-muted-foreground">
-              Deixe em branco para usar o mês atual como início.
-            </p>
-          </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="description">Descrição/Título da Dívida</Label>
-            <Input
-              id="description"
+            <FormField
+              control={form.control}
               name="description"
-              placeholder="Ex: Notebook Dell, Viagem RJ"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Descrição/Título da Dívida</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Ex: Notebook Dell, Viagem RJ"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-end gap-4 pt-8">
-          <Button
-            variant="outline"
-            onClick={() => router.back()}
-            disabled={isSubmitting}
-          >
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Salvando...' : 'Salvar Dívida'}
-          </Button>
-        </CardFooter>
-      </form>
+          </CardContent>
+          <CardFooter className="flex justify-end gap-4 pt-8">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+              disabled={form.formState.isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? 'Salvando...' : 'Salvar Dívida'}
+            </Button>
+          </CardFooter>
+        </form>
+      </Form>
     </Card>
   );
 }

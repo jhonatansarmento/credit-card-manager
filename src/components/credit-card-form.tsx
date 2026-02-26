@@ -1,6 +1,9 @@
 'use client';
 
-import type React from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -10,27 +13,37 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import {
+  creditCardSchema,
+  type CreditCardFormData,
+} from '@/lib/schemas/credit-card';
 import type { CreditCard as CreditCardType } from '@prisma/client';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { toast } from 'sonner';
 
 interface CreditCardFormProps {
   card?: CreditCardType;
 }
 
 export default function CreditCardForm({ card }: CreditCardFormProps) {
-  const [name, setName] = useState(card?.name || '');
-  const [dueDay, setDueDay] = useState(card?.dueDay.toString() || '');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setIsSubmitting(true);
+  const form = useForm<CreditCardFormData>({
+    resolver: zodResolver(creditCardSchema),
+    defaultValues: {
+      name: card?.name ?? '',
+      dueDay: card?.dueDay ?? undefined,
+    },
+  });
 
+  const onSubmit = async (data: CreditCardFormData) => {
     try {
       const url = card ? `/api/cards/${card.id}` : '/api/cards';
       const method = card ? 'PUT' : 'POST';
@@ -38,12 +51,12 @@ export default function CreditCardForm({ card }: CreditCardFormProps) {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, dueDay: Number(dueDay) }),
+        body: JSON.stringify(data),
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Erro ao salvar o cartão.');
+        const body = await res.json();
+        throw new Error(body.error || 'Erro ao salvar o cartão.');
       }
 
       toast.success(
@@ -55,8 +68,6 @@ export default function CreditCardForm({ card }: CreditCardFormProps) {
       toast.error(
         error instanceof Error ? error.message : 'Erro ao salvar o cartão.',
       );
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -67,47 +78,64 @@ export default function CreditCardForm({ card }: CreditCardFormProps) {
           {card ? 'Editar Cartão de Crédito' : 'Novo Cartão de Crédito'}
         </CardTitle>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="name">Nome do Cartão</Label>
-            <Input
-              id="name"
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <CardContent className="grid gap-4">
+            <FormField
+              control={form.control}
               name="name"
-              placeholder="Ex: Nubank, Inter Mastercard"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nome do Cartão</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Ex: Nubank, Inter Mastercard"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="dueDay">Dia de Vencimento</Label>
-            <Input
-              id="dueDay"
+            <FormField
+              control={form.control}
               name="dueDay"
-              type="number"
-              placeholder="Ex: 10 (para dia 10 do mês)"
-              min="1"
-              max="31"
-              value={dueDay}
-              onChange={(e) => setDueDay(e.target.value)}
-              required
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dia de Vencimento</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="Ex: 10 (para dia 10 do mês)"
+                      min="1"
+                      max="31"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-end gap-4 pt-8">
-          <Button
-            variant="outline"
-            onClick={() => router.back()}
-            disabled={isSubmitting}
-          >
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Salvando...' : 'Salvar Cartão'}
-          </Button>
-        </CardFooter>
-      </form>
+          </CardContent>
+          <CardFooter className="flex justify-end gap-4 pt-8">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+              disabled={form.formState.isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? 'Salvando...' : 'Salvar Cartão'}
+            </Button>
+          </CardFooter>
+        </form>
+      </Form>
     </Card>
   );
 }

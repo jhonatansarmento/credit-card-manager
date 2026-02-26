@@ -1,6 +1,9 @@
 'use client';
 
-import type React from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -10,12 +13,20 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import {
+  personCompanySchema,
+  type PersonCompanyFormData,
+} from '@/lib/schemas/person-company';
 import type { PersonCompany as PersonCompanyType } from '@prisma/client';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { toast } from 'sonner';
 
 interface PersonCompanyFormProps {
   personCompany?: PersonCompanyType;
@@ -24,14 +35,16 @@ interface PersonCompanyFormProps {
 export default function PersonCompanyForm({
   personCompany,
 }: PersonCompanyFormProps) {
-  const [name, setName] = useState(personCompany?.name || '');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setIsSubmitting(true);
+  const form = useForm<PersonCompanyFormData>({
+    resolver: zodResolver(personCompanySchema),
+    defaultValues: {
+      name: personCompany?.name ?? '',
+    },
+  });
 
+  const onSubmit = async (data: PersonCompanyFormData) => {
     try {
       const url = personCompany
         ? `/api/names/${personCompany.id}`
@@ -41,12 +54,12 @@ export default function PersonCompanyForm({
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify(data),
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Erro ao salvar o nome.');
+        const body = await res.json();
+        throw new Error(body.error || 'Erro ao salvar o nome.');
       }
 
       toast.success(
@@ -60,8 +73,6 @@ export default function PersonCompanyForm({
       toast.error(
         error instanceof Error ? error.message : 'Erro ao salvar o nome.',
       );
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -72,33 +83,38 @@ export default function PersonCompanyForm({
           {personCompany ? 'Editar Nome' : 'Novo Nome (Pessoa/Empresa)'}
         </CardTitle>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="name">Nome</Label>
-            <Input
-              id="name"
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <CardContent className="grid gap-4">
+            <FormField
+              control={form.control}
               name="name"
-              placeholder="Ex: João, Empresa X"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nome</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex: João, Empresa X" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-end gap-4 pt-8">
-          <Button
-            variant="outline"
-            onClick={() => router.back()}
-            disabled={isSubmitting}
-          >
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Salvando...' : 'Salvar Nome'}
-          </Button>
-        </CardFooter>
-      </form>
+          </CardContent>
+          <CardFooter className="flex justify-end gap-4 pt-8">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+              disabled={form.formState.isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? 'Salvando...' : 'Salvar Nome'}
+            </Button>
+          </CardFooter>
+        </form>
+      </Form>
     </Card>
   );
 }
