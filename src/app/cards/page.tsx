@@ -1,3 +1,4 @@
+import CardBrandBadge from '@/components/card-brand-badge';
 import DeleteButton from '@/components/delete-button';
 import Navbar from '@/components/navbar';
 import { Button } from '@/components/ui/button';
@@ -68,7 +69,10 @@ export default async function CreditCardsPage() {
                     {creditCards.map((card) => (
                       <TableRow key={card.id}>
                         <TableCell className="font-medium">
-                          {card.name}
+                          <div className="flex items-center gap-3">
+                            <CardBrandBadge name={card.name} />
+                            <span>{card.name}</span>
+                          </div>
                         </TableCell>
                         <TableCell>{card.dueDay}</TableCell>
                         <TableCell className="text-right">

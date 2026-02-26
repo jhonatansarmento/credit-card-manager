@@ -1,3 +1,4 @@
+import CardBrandBadge from '@/components/card-brand-badge';
 import DebtFilters from '@/components/debt-filters';
 import DeleteButton from '@/components/delete-button';
 import Navbar from '@/components/navbar';
@@ -180,7 +181,12 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                       {debt.description}
                     </CardTitle>
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary">{debt.creditCard.name}</Badge>
+                      <div className="flex items-center gap-1.5">
+                        <CardBrandBadge name={debt.creditCard.name} size={28} />
+                        <span className="text-sm font-medium">
+                          {debt.creditCard.name}
+                        </span>
+                      </div>
                       <Badge variant="outline">{debt.personCompany.name}</Badge>
                       <Button variant="outline" size="icon" asChild>
                         <Link href={`/debts/${debt.id}/edit`}>
