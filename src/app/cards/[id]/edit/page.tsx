@@ -1,25 +1,25 @@
 import CreditCardForm from '@/components/credit-card-form';
 import Navbar from '@/components/navbar';
+import { getAuthSession } from '@/lib/auth-session';
 import prisma from '@/lib/db';
 import { notFound } from 'next/navigation';
 
-// TODO: Substituir por autenticação real
-const getUserId = () => 'temp-user-id';
-
 interface EditCreditCardPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function EditCreditCardPage({
   params,
 }: EditCreditCardPageProps) {
-  const userId = getUserId();
+  const { id } = await params;
+  const session = await getAuthSession();
+  const userId = session.user.id;
 
   const card = await prisma.creditCard.findUnique({
     where: {
-      id: params.id,
+      id,
       userId: userId, // Garante que o usuário é o proprietário do cartão
     },
   });

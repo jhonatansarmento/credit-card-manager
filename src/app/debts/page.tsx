@@ -17,6 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { getAuthSession } from '@/lib/auth-session';
 import prisma from '@/lib/db';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -26,21 +27,20 @@ import { Suspense } from 'react';
 import { deleteDebt, toggleInstallmentPaidStatus } from './actions';
 
 interface DebtsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     cardId?: string;
     personCompanyId?: string;
     month?: string;
     year?: string;
-  };
+  }>;
 }
 
-// TODO: Substituir por autenticação real
-const getUserId = () => 'temp-user-id';
-
 export default async function DebtsPage({ searchParams }: DebtsPageProps) {
-  const userId = getUserId();
+  const resolvedSearchParams = await searchParams;
+  const session = await getAuthSession();
+  const userId = session.user.id;
 
-  const { cardId, personCompanyId, month, year } = searchParams;
+  const { cardId, personCompanyId, month, year } = resolvedSearchParams;
 
   const creditCards = await prisma.creditCard.findMany({
     where: { userId },

@@ -1,14 +1,13 @@
 'use server';
 
+import { getAuthSession } from '@/lib/auth-session';
 import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-// TODO: Substituir por autenticação real
-const getUserId = () => 'temp-user-id';
-
 export async function createPersonCompany(formData: FormData) {
-  const userId = getUserId();
+  const session = await getAuthSession();
+  const userId = session.user.id;
   const name = formData.get('name') as string;
 
   if (!name) {
@@ -33,7 +32,8 @@ export async function createPersonCompany(formData: FormData) {
 }
 
 export async function updatePersonCompany(id: string, formData: FormData) {
-  const userId = getUserId();
+  const session = await getAuthSession();
+  const userId = session.user.id;
   const name = formData.get('name') as string;
 
   if (!name) {
@@ -58,7 +58,8 @@ export async function updatePersonCompany(id: string, formData: FormData) {
 }
 
 export async function deletePersonCompany(id: string) {
-  const userId = getUserId();
+  const session = await getAuthSession();
+  const userId = session.user.id;
   try {
     // Verifica se há dívidas associadas a esta pessoa/empresa
     const associatedDebts = await prisma.debt.count({

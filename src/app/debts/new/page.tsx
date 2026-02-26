@@ -2,14 +2,13 @@ import DebtForm from '@/components/debt-form';
 import Navbar from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { getAuthSession } from '@/lib/auth-session';
 import prisma from '@/lib/db';
 import Link from 'next/link';
 
-// TODO: Substituir por autenticação real
-const getUserId = () => 'temp-user-id';
-
 export default async function NewDebtPage() {
-  const userId = getUserId();
+  const session = await getAuthSession();
+  const userId = session.user.id;
 
   const creditCards = await prisma.creditCard.findMany({
     where: { userId },

@@ -1,11 +1,9 @@
 'use server';
 
+import { getAuthSession } from '@/lib/auth-session';
 import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-
-// TODO: Substituir por autenticação real
-const getUserId = () => 'temp-user-id';
 
 // Função auxiliar para calcular o valor da parcela e gerar as parcelas
 async function generateDebtAndInstallments(
@@ -93,7 +91,8 @@ async function generateDebtAndInstallments(
 }
 
 export async function createDebt(formData: FormData) {
-  const userId = getUserId();
+  const session = await getAuthSession();
+  const userId = session.user.id;
 
   const cardId = formData.get('cardId') as string;
   const personCompanyId = formData.get('personCompanyId') as string;
@@ -150,7 +149,8 @@ export async function createDebt(formData: FormData) {
 }
 
 export async function updateDebt(id: string, formData: FormData) {
-  const userId = getUserId();
+  const session = await getAuthSession();
+  const userId = session.user.id;
 
   const cardId = formData.get('cardId') as string;
   const personCompanyId = formData.get('personCompanyId') as string;
@@ -207,7 +207,8 @@ export async function updateDebt(id: string, formData: FormData) {
 }
 
 export async function deleteDebt(id: string) {
-  const userId = getUserId();
+  const session = await getAuthSession();
+  const userId = session.user.id;
 
   try {
     await prisma.debt.delete({
@@ -224,7 +225,8 @@ export async function toggleInstallmentPaidStatus(
   installmentId: string,
   isPaid: boolean,
 ) {
-  const userId = getUserId();
+  const session = await getAuthSession();
+  const userId = session.user.id;
 
   try {
     // Verifica se o usuário é o proprietário da dívida associada à parcela

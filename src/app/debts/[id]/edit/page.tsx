@@ -2,25 +2,25 @@ import DebtForm from '@/components/debt-form';
 import Navbar from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { getAuthSession } from '@/lib/auth-session';
 import prisma from '@/lib/db';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-// TODO: Substituir por autenticação real
-const getUserId = () => 'temp-user-id';
-
 interface EditDebtPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function EditDebtPage({ params }: EditDebtPageProps) {
-  const userId = getUserId();
+  const { id } = await params;
+  const session = await getAuthSession();
+  const userId = session.user.id;
 
   const debt = await prisma.debt.findUnique({
     where: {
-      id: params.id,
+      id,
       userId: userId, // Garante que o usuário é o proprietário da dívida
     },
   });

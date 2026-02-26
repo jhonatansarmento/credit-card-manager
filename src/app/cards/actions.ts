@@ -1,14 +1,13 @@
 'use server';
 
+import { getAuthSession } from '@/lib/auth-session';
 import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-// TODO: Substituir por autenticação real
-const getUserId = () => 'temp-user-id';
-
 export async function createCreditCard(formData: FormData) {
-  const userId = getUserId();
+  const session = await getAuthSession();
+  const userId = session.user.id;
 
   const name = formData.get('name') as string;
   const dueDay = Number.parseInt(formData.get('dueDay') as string);
@@ -39,7 +38,8 @@ export async function createCreditCard(formData: FormData) {
 }
 
 export async function updateCreditCard(id: string, formData: FormData) {
-  const userId = getUserId();
+  const session = await getAuthSession();
+  const userId = session.user.id;
 
   const name = formData.get('name') as string;
   const dueDay = Number.parseInt(formData.get('dueDay') as string);
@@ -70,7 +70,8 @@ export async function updateCreditCard(id: string, formData: FormData) {
 }
 
 export async function deleteCreditCard(id: string) {
-  const userId = getUserId();
+  const session = await getAuthSession();
+  const userId = session.user.id;
 
   try {
     // Verifica se há dívidas associadas a este cartão

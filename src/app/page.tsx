@@ -1,16 +1,20 @@
 import Navbar from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CreditCard, Link, Users, Wallet } from 'lucide-react';
+import { getAuthSession } from '@/lib/auth-session';
+import { CreditCard, Users, Wallet } from 'lucide-react';
+import Link from 'next/link';
 
 const HomePage = async () => {
+  const session = await getAuthSession();
+
   return (
     <div className='flex flex-col min-h-screen bg-gray-100 dark:bg-gray-950'>
       <Navbar />
       <main className='flex-1 p-4 md:p-6'>
         <div className='max-w-6xl mx-auto grid gap-6'>
           <h1 className='text-3xl font-bold'>
-            Bem-vindo ao seu Controle de Dívidas!
+            Bem-vindo, {session.user.name}!
           </h1>
           <p className='text-gray-500 dark:text-gray-400'>
             Gerencie seus cartões de crédito, pessoas/empresas e dívidas de

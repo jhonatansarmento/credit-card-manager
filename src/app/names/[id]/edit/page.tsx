@@ -1,25 +1,25 @@
 import Navbar from '@/components/navbar';
 import PersonCompanyForm from '@/components/person-company-form';
+import { getAuthSession } from '@/lib/auth-session';
 import prisma from '@/lib/db';
 import { notFound } from 'next/navigation';
 
-// TODO: Substituir por autenticação real
-const getUserId = () => 'temp-user-id';
-
 interface EditPersonCompanyPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function EditPersonCompanyPage({
   params,
 }: EditPersonCompanyPageProps) {
-  const userId = getUserId();
+  const { id } = await params;
+  const session = await getAuthSession();
+  const userId = session.user.id;
 
   const personCompany = await prisma.personCompany.findUnique({
     where: {
-      id: params.id,
+      id,
       userId: userId, // Garante que o usuário é o proprietário do registro
     },
   });

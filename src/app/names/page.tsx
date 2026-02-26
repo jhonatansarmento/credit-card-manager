@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { getAuthSession } from '@/lib/auth-session';
 import prisma from '@/lib/db';
 import { Pencil, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -21,11 +22,9 @@ import Link from 'next/link';
 import DeleteButton from '@/components/delete-button';
 import { deletePersonCompany } from './actions';
 
-// TODO: Substituir por autenticação real
-const getUserId = () => 'temp-user-id';
-
 export default async function PersonCompaniesPage() {
-  const userId = getUserId();
+  const session = await getAuthSession();
+  const userId = session.user.id;
 
   const personCompanies = await prisma.personCompany.findMany({
     where: { userId },

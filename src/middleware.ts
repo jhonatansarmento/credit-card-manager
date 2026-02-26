@@ -1,8 +1,26 @@
-// TODO: Implementar middleware de autenticação
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import { getSessionCookie } from 'better-auth/cookies';
+import { NextRequest, NextResponse } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
+  const sessionCookie = getSessionCookie(request);
+  const { pathname } = request.nextUrl;
+
+  // Rotas protegidas
+  const protectedPaths = ['/cards', '/names', '/debts'];
+  const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
+
+  if (isProtected && !sessionCookie) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  // Redireciona usuário logado para home se tentar acessar login/signup
+  if (
+    (pathname.startsWith('/login') || pathname.startsWith('/signup')) &&
+    sessionCookie
+  ) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
   return NextResponse.next();
 }
 

@@ -8,15 +8,21 @@ datasource db {
 }
 
 model User {
-  id              String          @id @unique // ID do usuário do Clerk
+  id              String          @id
   email           String          @unique
-  name            String?
+  name            String
+  emailVerified   Boolean         @default(false)
+  image           String?
   creditCards     CreditCard[]
   personCompanies PersonCompany[]
   debts           Debt[]
+  sessions        Session[]
+  accounts        Account[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("user")
 }
 
 model CreditCard {
@@ -31,7 +37,8 @@ model CreditCard {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([userId, name]) // Um usuário não pode ter dois cartões com o mesmo nome
+  // Um usuário não pode ter dois cartões com o mesmo nome
+  @@unique([userId, name])
 }
 
 model PersonCompany {
@@ -45,7 +52,8 @@ model PersonCompany {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([userId, name]) // Um usuário não pode ter duas pessoas/empresas com o mesmo nome
+  // Um usuário não pode ter duas pessoas/empresas com o mesmo nome
+  @@unique([userId, name])
 }
 
 model Debt {
@@ -80,5 +88,54 @@ model Installment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([debtId, installmentNumber]) // Cada número de parcela para uma dívida deve ser único
+  // Cada número de parcela para uma dívida deve ser único
+  @@unique([debtId, installmentNumber])
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
 }
