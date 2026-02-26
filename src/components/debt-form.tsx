@@ -201,7 +201,7 @@ export default function DebtForm({
             />
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
+        <CardFooter className="flex justify-end gap-4 pt-8">
           <Button
             variant="outline"
             onClick={() => router.back()}

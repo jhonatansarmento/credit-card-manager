@@ -1,5 +1,16 @@
 'use client';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -15,8 +26,6 @@ export default function DeleteButton({ endpoint }: DeleteButtonProps) {
   const router = useRouter();
 
   const handleDelete = async () => {
-    if (!window.confirm('Tem certeza que deseja excluir este item?')) return;
-
     setIsDeleting(true);
     try {
       const res = await fetch(endpoint, { method: 'DELETE' });
@@ -38,14 +47,31 @@ export default function DeleteButton({ endpoint }: DeleteButtonProps) {
   };
 
   return (
-    <Button
-      variant="destructive"
-      size="icon"
-      onClick={handleDelete}
-      disabled={isDeleting}
-    >
-      <Trash2 className="h-4 w-4" />
-      <span className="sr-only">Excluir</span>
-    </Button>
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive" size="icon" disabled={isDeleting}>
+          <Trash2 className="h-4 w-4" />
+          <span className="sr-only">Excluir</span>
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir item?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Esta ação não pode ser desfeita. Tem certeza que deseja excluir este
+            item?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Sim, excluir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
