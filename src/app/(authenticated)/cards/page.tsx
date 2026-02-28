@@ -30,16 +30,6 @@ export default async function CreditCardsPage() {
 
   return (
     <div className="max-w-6xl mx-auto grid gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Meus Cartões de Crédito</h1>
-        <Button asChild>
-          <Link href="/cards/new">
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Novo Cartão
-          </Link>
-        </Button>
-      </div>
-
       {creditCards.length === 0 ? (
         <Card className="p-10 text-center">
           <div className="flex flex-col items-center gap-4">

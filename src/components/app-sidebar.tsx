@@ -6,14 +6,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import {
-  CreditCard,
-  Home,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Users,
-  Wallet,
-} from 'lucide-react';
+import { CreditCard, Home, Users, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createContext, useContext, useEffect, useState } from 'react';
@@ -36,7 +29,7 @@ const navSections: NavSection[] = [
   {
     title: 'Organização',
     items: [
-      { href: '/', label: 'Início', icon: Home },
+      { href: '/', label: 'Dashboard', icon: Home },
       { href: '/debts', label: 'Dívidas', icon: Wallet },
     ],
   },
@@ -161,7 +154,6 @@ function SidebarContent({
   user: { name: string; email: string; image?: string | null } | null;
 }) {
   const pathname = usePathname();
-  const { setCollapsed } = useSidebar();
 
   return (
     <div className="flex h-full flex-col">
@@ -209,22 +201,6 @@ function SidebarContent({
 
       {/* Bottom section */}
       <div className="mt-auto border-t border-sidebar-border px-3 py-3">
-        {/* Collapse toggle — only on desktop */}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="hidden md:flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors"
-          title={collapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
-        >
-          {collapsed ? (
-            <PanelLeftOpen className="h-4 w-4 shrink-0" />
-          ) : (
-            <>
-              <PanelLeftClose className="h-4 w-4 shrink-0" />
-              <span>Recolher</span>
-            </>
-          )}
-        </button>
-
         {/* User profile */}
         {user && <SidebarProfile user={user} collapsed={collapsed} />}
       </div>

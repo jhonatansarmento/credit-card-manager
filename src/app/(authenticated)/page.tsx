@@ -67,13 +67,6 @@ export default async function HomePage() {
 
   return (
     <div className="max-w-7xl mx-auto grid gap-6">
-      <div>
-        <h1 className="text-3xl font-bold">Bem-vindo, {session.user.name}!</h1>
-        <p className="text-muted-foreground mt-1">
-          Visão geral das suas finanças
-        </p>
-      </div>
-
       {!hasData ? (
         <Card className="p-8 text-center">
           <div className="flex flex-col items-center gap-4">

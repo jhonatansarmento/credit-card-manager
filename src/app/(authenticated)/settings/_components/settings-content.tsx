@@ -61,9 +61,7 @@ export function SettingsContent({ user }: SettingsContentProps) {
 
   return (
     <>
-      <h1 className="text-3xl font-bold">Configurações</h1>
-
-      <div className="max-w-2xl space-y-6 mt-6">
+      <div className="max-w-2xl space-y-6">
         {/* Tabs */}
         <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
           {tabs.map((tab) => {

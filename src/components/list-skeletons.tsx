@@ -12,10 +12,6 @@ import {
 export function CardsListSkeleton() {
   return (
     <div className="max-w-6xl mx-auto grid gap-6">
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-9 w-64" />
-        <Skeleton className="h-10 w-36" />
-      </div>
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -57,10 +53,6 @@ export function CardsListSkeleton() {
 export function NamesListSkeleton() {
   return (
     <div className="max-w-6xl mx-auto grid gap-6">
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-9 w-52" />
-        <Skeleton className="h-10 w-36" />
-      </div>
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -95,10 +87,6 @@ export function NamesListSkeleton() {
 export function DebtsListSkeleton() {
   return (
     <div className="max-w-6xl mx-auto grid gap-6">
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-9 w-48" />
-        <Skeleton className="h-10 w-36" />
-      </div>
       {/* Filters skeleton */}
       <Card className="p-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">

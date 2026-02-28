@@ -112,16 +112,6 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
 
   return (
     <div className="max-w-6xl mx-auto grid gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Minhas Dívidas</h1>
-        <Button asChild>
-          <Link href="/debts/new">
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Nova Dívida
-          </Link>
-        </Button>
-      </div>
-
       <Suspense fallback={<div>Carregando filtros...</div>}>
         <DebtFilters
           creditCards={creditCards}
