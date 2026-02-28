@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { getAuthSession } from '@/lib/auth-session';
 import { listCreditCards } from '@/services/credit-card.service';
+import { listCategories } from '@/services/category.service';
 import { getDebt } from '@/services/debt.service';
 import { listNames } from '@/services/name.service';
 import Link from 'next/link';
@@ -33,9 +34,10 @@ export default async function EditDebtPage({ params }: EditDebtPageProps) {
     installmentValue: Number(debt.installmentValue),
   };
 
-  const [creditCards, personCompanies] = await Promise.all([
+  const [creditCards, personCompanies, categories] = await Promise.all([
     listCreditCards(userId),
     listNames(userId),
+    listCategories(userId),
   ]);
 
   if (creditCards.length === 0 || personCompanies.length === 0) {
@@ -70,6 +72,7 @@ export default async function EditDebtPage({ params }: EditDebtPageProps) {
           debt={serializedDebt}
           creditCards={creditCards}
           personCompanies={personCompanies}
+          categories={categories}
         />
       </div>
     </div>

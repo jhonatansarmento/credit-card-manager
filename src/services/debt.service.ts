@@ -4,10 +4,12 @@ import { Prisma } from '@prisma/client';
 export interface DebtPayload {
   cardId: string;
   personCompanyId: string;
+  categoryId?: string | null;
   totalAmount: number;
   installmentsQuantity: number;
   startDate: string; // YYYY-MM-DD
   description: string;
+  isRecurring?: boolean;
 }
 
 export interface DebtFilters {
@@ -129,6 +131,18 @@ export async function getDebt(id: string, userId: string) {
   });
 }
 
+export async function getDebtDetail(id: string, userId: string) {
+  return prisma.debt.findUnique({
+    where: { id, userId },
+    include: {
+      creditCard: true,
+      personCompany: true,
+      category: true,
+      installments: { orderBy: { installmentNumber: 'asc' } },
+    },
+  });
+}
+
 export async function listDebts(
   userId: string,
   filters: DebtFilters = {},
@@ -230,6 +244,7 @@ async function findDebts(
     include: {
       creditCard: true,
       personCompany: true,
+      category: true,
       installments: { orderBy: { installmentNumber: 'asc' } },
     },
     orderBy,
@@ -256,11 +271,13 @@ export async function createDebt(userId: string, payload: DebtPayload) {
         userId,
         cardId: payload.cardId,
         personCompanyId: payload.personCompanyId,
+        categoryId: payload.categoryId || null,
         totalAmount: payload.totalAmount,
         installmentsQuantity: payload.installmentsQuantity,
         installmentValue,
         startDate,
         description: payload.description,
+        isRecurring: payload.isRecurring || false,
         installments: { createMany: { data: installmentsData } },
       },
     });
@@ -307,11 +324,13 @@ export async function updateDebt(
       data: {
         cardId: payload.cardId,
         personCompanyId: payload.personCompanyId,
+        categoryId: payload.categoryId ?? null,
         totalAmount: payload.totalAmount,
         installmentsQuantity: payload.installmentsQuantity,
         installmentValue,
         startDate,
         description: payload.description,
+        isRecurring: payload.isRecurring || false,
         installments: {
           deleteMany: {},
           createMany: { data: installmentsWithStatus },
@@ -381,10 +400,12 @@ export async function duplicateDebt(debtId: string, userId: string) {
   const payload: DebtPayload = {
     cardId: original.cardId,
     personCompanyId: original.personCompanyId,
+    categoryId: original.categoryId,
     totalAmount: Number(original.totalAmount),
     installmentsQuantity: original.installmentsQuantity,
     startDate: original.startDate.toISOString().split('T')[0],
     description: `${original.description} (cópia)`,
+    isRecurring: original.isRecurring,
   };
 
   return createDebt(userId, payload);

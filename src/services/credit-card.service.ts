@@ -26,7 +26,7 @@ export async function getCreditCard(id: string, userId: string) {
 
 export async function createCreditCard(
   userId: string,
-  data: { name: string; dueDay: number },
+  data: { name: string; dueDay: number; closingDay?: number | null },
 ) {
   if (!data.name || !data.dueDay) {
     throw new Error('Nome e dia de vencimento são obrigatórios.');
@@ -34,10 +34,22 @@ export async function createCreditCard(
   if (data.dueDay < 1 || data.dueDay > 31) {
     throw new Error('O dia de vencimento deve ser entre 1 e 31.');
   }
+  if (
+    data.closingDay !== undefined &&
+    data.closingDay !== null &&
+    (data.closingDay < 1 || data.closingDay > 31)
+  ) {
+    throw new Error('O dia de fechamento deve ser entre 1 e 31.');
+  }
 
   try {
     return await prisma.creditCard.create({
-      data: { userId, name: data.name, dueDay: data.dueDay },
+      data: {
+        userId,
+        name: data.name,
+        dueDay: data.dueDay,
+        closingDay: data.closingDay ?? null,
+      },
     });
   } catch {
     throw new Error(
@@ -49,7 +61,7 @@ export async function createCreditCard(
 export async function updateCreditCard(
   id: string,
   userId: string,
-  data: { name: string; dueDay: number },
+  data: { name: string; dueDay: number; closingDay?: number | null },
 ) {
   if (!data.name || !data.dueDay) {
     throw new Error('Nome e dia de vencimento são obrigatórios.');
@@ -57,11 +69,22 @@ export async function updateCreditCard(
   if (data.dueDay < 1 || data.dueDay > 31) {
     throw new Error('O dia de vencimento deve ser entre 1 e 31.');
   }
+  if (
+    data.closingDay !== undefined &&
+    data.closingDay !== null &&
+    (data.closingDay < 1 || data.closingDay > 31)
+  ) {
+    throw new Error('O dia de fechamento deve ser entre 1 e 31.');
+  }
 
   try {
     return await prisma.creditCard.update({
       where: { id, userId },
-      data: { name: data.name, dueDay: data.dueDay },
+      data: {
+        name: data.name,
+        dueDay: data.dueDay,
+        closingDay: data.closingDay ?? null,
+      },
     });
   } catch {
     throw new Error(

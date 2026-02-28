@@ -5,6 +5,7 @@ export const debtSchema = z.object({
   personCompanyId: z
     .string()
     .min(1, { message: 'Selecione uma pessoa/empresa.' }),
+  categoryId: z.string().nullish(),
   totalAmount: z
     .number({ message: 'O valor total é obrigatório.' })
     .positive({ message: 'O valor total deve ser positivo.' })
@@ -21,6 +22,7 @@ export const debtSchema = z.object({
     .string()
     .min(1, { message: 'A descrição é obrigatória.' })
     .max(500, { message: 'A descrição deve ter no máximo 500 caracteres.' }),
+  isRecurring: z.boolean().default(false),
 });
 
-export type DebtFormData = z.infer<typeof debtSchema>;
+export type DebtFormData = z.input<typeof debtSchema>;

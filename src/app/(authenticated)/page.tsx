@@ -1,5 +1,7 @@
 import CardBrandBadge from '@/components/card-brand-badge';
+import { CategoryDonutChart } from '@/components/category-donut-chart';
 import { MonthlyEvolutionChart } from '@/components/monthly-evolution-chart';
+import { ProjectionChart } from '@/components/projection-chart';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,9 +24,12 @@ import { getAuthSession } from '@/lib/auth-session';
 import { formatCurrency } from '@/lib/format';
 import {
   getDashboardSummary,
+  getInvoiceSummaries,
   getMonthlyEvolution,
+  getMonthlyProjection,
   getOverdueInstallments,
   getSpendingByCard,
+  getSpendingByCategory,
   getSpendingByPerson,
   getUpcomingInstallments,
 } from '@/services/dashboard.service';
@@ -34,6 +39,8 @@ import {
   AlertTriangle,
   CalendarClock,
   CreditCard,
+  PieChart,
+  Receipt,
   TrendingUp,
   Users,
   Wallet,
@@ -48,14 +55,20 @@ export default async function HomePage() {
     summary,
     spendingByCard,
     spendingByPerson,
+    spendingByCategory,
+    invoiceSummaries,
     monthlyEvolution,
+    monthlyProjection,
     upcoming,
     overdue,
   ] = await Promise.all([
     getDashboardSummary(userId),
     getSpendingByCard(userId),
     getSpendingByPerson(userId),
+    getSpendingByCategory(userId),
+    getInvoiceSummaries(userId),
     getMonthlyEvolution(userId),
+    getMonthlyProjection(userId, 6),
     getUpcomingInstallments(userId),
     getOverdueInstallments(userId),
   ]);
@@ -285,6 +298,93 @@ export default async function HomePage() {
             </Card>
           </div>
 
+          {/* Spending by Category + Invoice Summaries */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Spending by Category Donut Chart */}
+            {spendingByCategory.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="h-5 w-5" />
+                    Gastos por Categoria
+                  </CardTitle>
+                  <CardDescription>
+                    Distribuição de valores por categoria de despesa
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <CategoryDonutChart data={spendingByCategory} />
+                  <div className="mt-4 space-y-2">
+                    {spendingByCategory.map((cat) => (
+                      <div
+                        key={cat.categoryName}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: cat.color }}
+                          />
+                          <span>
+                            {cat.emoji} {cat.categoryName}
+                          </span>
+                        </div>
+                        <span className="font-medium">
+                          {formatCurrency(cat.totalAmount)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Invoice Summaries */}
+            {invoiceSummaries.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Receipt className="h-5 w-5" />
+                    Faturas Atuais
+                  </CardTitle>
+                  <CardDescription>
+                    Resumo das faturas no ciclo de cobrança atual
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {invoiceSummaries.map((invoice) => (
+                      <div
+                        key={invoice.cardId}
+                        className="flex items-center justify-between p-3 border rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <CardBrandBadge name={invoice.cardName} size={28} />
+                          <div>
+                            <p className="font-medium text-sm">
+                              {invoice.cardName}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {invoice.installmentCount} parcela
+                              {invoice.installmentCount !== 1 ? 's' : ''} •
+                              Venc. dia {invoice.dueDay}
+                              {invoice.closingDay
+                                ? ` • Fecha dia ${invoice.closingDay}`
+                                : ''}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-lg font-bold">
+                          {formatCurrency(invoice.currentInvoiceTotal)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
           {/* Monthly Evolution Chart */}
           {monthlyEvolution.length > 0 && (
             <Card>
@@ -299,6 +399,25 @@ export default async function HomePage() {
               </CardHeader>
               <CardContent>
                 <MonthlyEvolutionChart data={monthlyEvolution} />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Monthly Projection Chart */}
+          {monthlyProjection.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarClock className="h-5 w-5" />
+                  Projeção de Gastos
+                </CardTitle>
+                <CardDescription>
+                  Projeção de parcelas pendentes e acumulado para os próximos
+                  meses
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ProjectionChart data={monthlyProjection} />
               </CardContent>
             </Card>
           )}

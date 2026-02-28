@@ -298,3 +298,201 @@ export async function getOverdueInstallments(
     amount: Number(inst.amount),
   }));
 }
+
+// --- Sprint 9 additions ---
+
+export interface SpendingByCategory {
+  categoryId: string | null;
+  categoryName: string;
+  emoji: string;
+  color: string;
+  totalAmount: number;
+  pendingAmount: number;
+  debtCount: number;
+}
+
+export interface InvoiceSummary {
+  cardId: string;
+  cardName: string;
+  closingDay: number | null;
+  dueDay: number;
+  currentInvoiceTotal: number;
+  installmentCount: number;
+  debtCount: number;
+}
+
+export interface MonthlyProjection {
+  month: string;
+  pending: number;
+  cumulative: number;
+}
+
+export async function getSpendingByCategory(
+  userId: string,
+): Promise<SpendingByCategory[]> {
+  const debts = await prisma.debt.findMany({
+    where: { userId },
+    select: {
+      categoryId: true,
+      category: { select: { name: true, emoji: true, color: true } },
+      installments: {
+        select: { amount: true, isPaid: true },
+      },
+    },
+  });
+
+  const catMap = new Map<string, SpendingByCategory>();
+
+  for (const debt of debts) {
+    const key = debt.categoryId || '__uncategorized__';
+    const existing = catMap.get(key) || {
+      categoryId: debt.categoryId,
+      categoryName: debt.category?.name || 'Sem Categoria',
+      emoji: debt.category?.emoji || '📦',
+      color: debt.category?.color || '#6B7280',
+      totalAmount: 0,
+      pendingAmount: 0,
+      debtCount: 0,
+    };
+
+    existing.debtCount += 1;
+    for (const inst of debt.installments) {
+      const amount = Number(inst.amount);
+      existing.totalAmount += amount;
+      if (!inst.isPaid) {
+        existing.pendingAmount += amount;
+      }
+    }
+    catMap.set(key, existing);
+  }
+
+  return Array.from(catMap.values()).sort(
+    (a, b) => b.totalAmount - a.totalAmount,
+  );
+}
+
+export async function getInvoiceSummaries(
+  userId: string,
+): Promise<InvoiceSummary[]> {
+  const cards = await prisma.creditCard.findMany({
+    where: { userId },
+    select: { id: true, name: true, dueDay: true, closingDay: true },
+  });
+
+  const now = new Date();
+  const results: InvoiceSummary[] = [];
+
+  for (const card of cards) {
+    const closingDay = card.closingDay || card.dueDay;
+    let cycleStart: Date;
+    let cycleEnd: Date;
+
+    if (now.getDate() <= closingDay) {
+      cycleStart = new Date(
+        now.getFullYear(),
+        now.getMonth() - 1,
+        closingDay + 1,
+      );
+      cycleEnd = new Date(now.getFullYear(), now.getMonth(), closingDay);
+    } else {
+      cycleStart = new Date(now.getFullYear(), now.getMonth(), closingDay + 1);
+      cycleEnd = new Date(now.getFullYear(), now.getMonth() + 1, closingDay);
+    }
+
+    const installments = await prisma.installment.findMany({
+      where: {
+        debt: { userId, cardId: card.id },
+        dueDate: { gte: cycleStart, lte: cycleEnd },
+      },
+      select: { amount: true, debtId: true },
+    });
+
+    const uniqueDebts = new Set(installments.map((i) => i.debtId));
+    const total = installments.reduce((sum, i) => sum + Number(i.amount), 0);
+
+    results.push({
+      cardId: card.id,
+      cardName: card.name,
+      closingDay: card.closingDay,
+      dueDay: card.dueDay,
+      currentInvoiceTotal: total,
+      installmentCount: installments.length,
+      debtCount: uniqueDebts.size,
+    });
+  }
+
+  return results.sort((a, b) => b.currentInvoiceTotal - a.currentInvoiceTotal);
+}
+
+export async function getMonthlyProjection(
+  userId: string,
+  months = 12,
+): Promise<MonthlyProjection[]> {
+  const now = new Date();
+  const projections: MonthlyProjection[] = [];
+  let cumulative = 0;
+
+  for (let i = 0; i < months; i++) {
+    const targetDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    const endDate = new Date(now.getFullYear(), now.getMonth() + i + 1, 0);
+    const year = targetDate.getFullYear();
+    const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const key = `${year}-${month}`;
+
+    const pendingAgg = await prisma.installment.aggregate({
+      where: {
+        debt: { userId, isArchived: false },
+        isPaid: false,
+        dueDate: { gte: targetDate, lte: endDate },
+      },
+      _sum: { amount: true },
+    });
+
+    const pending = Number(pendingAgg._sum.amount ?? 0);
+    cumulative += pending;
+
+    projections.push({ month: key, pending, cumulative });
+  }
+
+  return projections;
+}
+
+export async function getDashboardSummaryForPeriod(
+  userId: string,
+  year: number,
+  month: number,
+): Promise<{
+  totalPending: number;
+  totalPaid: number;
+  installmentCount: number;
+}> {
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0);
+
+  const [paidAgg, pendingAgg] = await Promise.all([
+    prisma.installment.aggregate({
+      where: {
+        debt: { userId },
+        isPaid: true,
+        dueDate: { gte: startDate, lte: endDate },
+      },
+      _sum: { amount: true },
+      _count: true,
+    }),
+    prisma.installment.aggregate({
+      where: {
+        debt: { userId },
+        isPaid: false,
+        dueDate: { gte: startDate, lte: endDate },
+      },
+      _sum: { amount: true },
+      _count: true,
+    }),
+  ]);
+
+  return {
+    totalPaid: Number(paidAgg._sum.amount ?? 0),
+    totalPending: Number(pendingAgg._sum.amount ?? 0),
+    installmentCount: paidAgg._count + pendingAgg._count,
+  };
+}

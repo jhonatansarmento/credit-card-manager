@@ -17,6 +17,7 @@ model User {
   creditCards     CreditCard[]
   personCompanies PersonCompany[]
   debts           Debt[]
+  categories      Category[]
   sessions        Session[]
   accounts        Account[]
 
@@ -27,11 +28,12 @@ model User {
 }
 
 model CreditCard {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name   String
-  dueDay Int // Dia do mês (1-31)
+  id         String @id @default(cuid())
+  userId     String
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  dueDay     Int // Dia de vencimento da fatura (1-31)
+  closingDay Int?   // Dia de fechamento da fatura (1-31)
 
   debts Debt[]
 
@@ -62,15 +64,18 @@ model Debt {
   userId               String
   user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   cardId               String
-  creditCard           CreditCard    @relation(fields: [cardId], references: [id], onDelete: Restrict) // Restringe a exclusão se houver dívidas
+  creditCard           CreditCard    @relation(fields: [cardId], references: [id], onDelete: Restrict)
   personCompanyId      String
-  personCompany        PersonCompany @relation(fields: [personCompanyId], references: [id], onDelete: Restrict) // Restringe a exclusão se houver dívidas
+  personCompany        PersonCompany @relation(fields: [personCompanyId], references: [id], onDelete: Restrict)
+  categoryId           String?
+  category             Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   totalAmount          Decimal       @db.Decimal(10, 2)
   installmentsQuantity Int
   installmentValue     Decimal       @db.Decimal(10, 2)
-  startDate            DateTime      @default(now()) @db.Date // Armazena apenas a data
+  startDate            DateTime      @default(now()) @db.Date
   description          String
   isArchived           Boolean       @default(false)
+  isRecurring          Boolean       @default(false)
 
   installments Installment[]
 
@@ -80,6 +85,7 @@ model Debt {
   @@index([userId, isArchived])
   @@index([cardId])
   @@index([personCompanyId])
+  @@index([categoryId])
 }
 
 model Installment {
@@ -98,6 +104,27 @@ model Installment {
   @@unique([debtId, installmentNumber])
   @@index([debtId, isPaid])
   @@index([debtId, dueDate])
+}
+
+model Category {
+  id       String  @id @default(cuid())
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name     String
+  emoji    String  @default("📁")
+  color    String  @default("#6B7280") // Cor hex para badge
+  parentId String?
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryHierarchy")
+
+  debts Debt[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@index([parentId])
 }
 
 model Session {

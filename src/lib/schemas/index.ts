@@ -1,3 +1,4 @@
+export { categorySchema, type CategoryFormData } from './category';
 export { creditCardSchema, type CreditCardFormData } from './credit-card';
 export { debtSchema, type DebtFormData } from './debt';
 export {

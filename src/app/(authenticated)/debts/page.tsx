@@ -1,3 +1,8 @@
+import {
+  BatchActionsBar,
+  BatchCheckbox,
+  BatchProvider,
+} from '@/components/batch-actions';
 import CardBrandBadge from '@/components/card-brand-badge';
 import DebtActionsMenu from '@/components/debt-actions-menu';
 import DebtFilters from '@/components/debt-filters';
@@ -21,7 +26,7 @@ import { listDebts } from '@/services/debt.service';
 import { listNames } from '@/services/name.service';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Archive, PlusCircle, SearchX, Wallet } from 'lucide-react';
+import { Archive, PlusCircle, RefreshCw, SearchX, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
@@ -168,176 +173,244 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
           </Card>
         )
       ) : (
-        <>
-          <Card className="p-4">
-            <CardTitle className="text-2xl">
-              Total de Dívidas Exibidas:{' '}
-              <span className="font-bold text-primary">
-                {formatCurrency(totalAmountDisplayed)}
-              </span>
-            </CardTitle>
-          </Card>
-
-          {debts.map((debt) => {
-            const paidCount = debt.installments.filter(
-              (inst) => inst.isPaid,
-            ).length;
-            const totalCount = debt.installments.length;
-            const progressPercent =
-              totalCount > 0 ? (paidCount / totalCount) * 100 : 0;
-            const allPaid = paidCount === totalCount && totalCount > 0;
-
-            return (
-              <Card
-                key={debt.id}
-                className={`mb-4 ${debt.isArchived ? 'opacity-60' : ''}`}
-              >
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-lg font-medium">
-                      {debt.description}
-                    </CardTitle>
-                    {debt.isArchived && (
-                      <Badge variant="secondary">
-                        <Archive className="h-3 w-3 mr-1" />
-                        Arquivada
-                      </Badge>
+        <BatchProvider>
+          <>
+            <Card className="p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <CardTitle className="text-2xl">
+                  Total:{' '}
+                  <span className="font-bold text-primary">
+                    {formatCurrency(totalAmountDisplayed)}
+                  </span>
+                </CardTitle>
+                <div className="flex gap-3 text-sm text-muted-foreground sm:ml-auto">
+                  <span className="text-green-600 dark:text-green-400 font-medium">
+                    Pago:{' '}
+                    {formatCurrency(
+                      debts.reduce(
+                        (sum, d) =>
+                          sum +
+                          d.installments
+                            .filter((i) => i.isPaid)
+                            .reduce((s, i) => s + Number(i.amount), 0),
+                        0,
+                      ),
                     )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5">
-                      <CardBrandBadge name={debt.creditCard.name} size={28} />
-                      <span className="text-sm font-medium">
-                        {debt.creditCard.name}
+                  </span>
+                  <span className="text-destructive font-medium">
+                    Pendente:{' '}
+                    {formatCurrency(
+                      debts.reduce(
+                        (sum, d) =>
+                          sum +
+                          d.installments
+                            .filter((i) => !i.isPaid)
+                            .reduce((s, i) => s + Number(i.amount), 0),
+                        0,
+                      ),
+                    )}
+                  </span>
+                </div>
+              </div>
+            </Card>
+
+            {debts.map((debt) => {
+              const paidCount = debt.installments.filter(
+                (inst) => inst.isPaid,
+              ).length;
+              const totalCount = debt.installments.length;
+              const progressPercent =
+                totalCount > 0 ? (paidCount / totalCount) * 100 : 0;
+              const allPaid = paidCount === totalCount && totalCount > 0;
+
+              return (
+                <Card
+                  key={debt.id}
+                  className={`mb-4 ${debt.isArchived ? 'opacity-60' : ''}`}
+                >
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <BatchCheckbox debtId={debt.id} />
+                      <Link
+                        href={`/debts/${debt.id}`}
+                        className="hover:underline"
+                      >
+                        <CardTitle className="text-lg font-medium">
+                          {debt.description}
+                        </CardTitle>
+                      </Link>
+                      {debt.isArchived && (
+                        <Badge variant="secondary">
+                          <Archive className="h-3 w-3 mr-1" />
+                          Arquivada
+                        </Badge>
+                      )}
+                      {debt.isRecurring && (
+                        <Badge
+                          variant="outline"
+                          className="border-purple-500 text-purple-600 dark:text-purple-400"
+                        >
+                          <RefreshCw className="h-3 w-3 mr-1" />
+                          Recorrente
+                        </Badge>
+                      )}
+                      {debt.category && (
+                        <Badge
+                          variant="outline"
+                          style={{ borderColor: debt.category.color }}
+                        >
+                          {debt.category.emoji} {debt.category.name}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <CardBrandBadge name={debt.creditCard.name} size={28} />
+                        <span className="text-sm font-medium">
+                          {debt.creditCard.name}
+                        </span>
+                      </div>
+                      <Badge variant="outline">{debt.personCompany.name}</Badge>
+                      <DebtActionsMenu
+                        debtId={debt.id}
+                        isArchived={debt.isArchived}
+                        allPaid={allPaid}
+                      />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Valor Total: {formatCurrency(Number(debt.totalAmount))} |{' '}
+                      {debt.installmentsQuantity} Parcelas de{' '}
+                      {formatCurrency(Number(debt.installmentValue))}
+                    </p>
+
+                    {/* Progress bar */}
+                    <div className="flex items-center gap-3 mb-4">
+                      <Progress
+                        value={progressPercent}
+                        className="flex-1 h-2"
+                      />
+                      <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                        {paidCount}/{totalCount} pagas
                       </span>
                     </div>
-                    <Badge variant="outline">{debt.personCompany.name}</Badge>
-                    <DebtActionsMenu
-                      debtId={debt.id}
-                      isArchived={debt.isArchived}
-                      allPaid={allPaid}
-                    />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Valor Total: {formatCurrency(Number(debt.totalAmount))} |{' '}
-                    {debt.installmentsQuantity} Parcelas de{' '}
-                    {formatCurrency(Number(debt.installmentValue))}
-                  </p>
 
-                  {/* Progress bar */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <Progress value={progressPercent} className="flex-1 h-2" />
-                    <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-                      {paidCount}/{totalCount} pagas
-                    </span>
-                  </div>
+                    <h3 className="font-semibold mb-2">Parcelas:</h3>
+                    {(() => {
+                      const filteredInstallments = debt.installments.filter(
+                        (inst) => {
+                          if (month || year) {
+                            const monthMatch = month
+                              ? inst.dueDate.getMonth() ===
+                                Number.parseInt(month) - 1
+                              : true;
+                            const yearMatch = year
+                              ? inst.dueDate.getFullYear() ===
+                                Number.parseInt(year)
+                              : true;
+                            return monthMatch && yearMatch;
+                          }
+                          return true;
+                        },
+                      );
 
-                  <h3 className="font-semibold mb-2">Parcelas:</h3>
-                  {(() => {
-                    const filteredInstallments = debt.installments.filter(
-                      (inst) => {
-                        if (month || year) {
-                          const monthMatch = month
-                            ? inst.dueDate.getMonth() ===
-                              Number.parseInt(month) - 1
-                            : true;
-                          const yearMatch = year
-                            ? inst.dueDate.getFullYear() ===
-                              Number.parseInt(year)
-                            : true;
-                          return monthMatch && yearMatch;
-                        }
-                        return true;
-                      },
-                    );
+                      const installmentCards = filteredInstallments.map(
+                        (installment) => {
+                          const isCurrentMonth =
+                            installment.dueDate.getMonth() === currentMonth &&
+                            installment.dueDate.getFullYear() === currentYear;
+                          const isOverdue =
+                            !installment.isPaid &&
+                            installment.dueDate < new Date();
 
-                    const installmentCards = filteredInstallments.map(
-                      (installment) => {
-                        const isCurrentMonth =
-                          installment.dueDate.getMonth() === currentMonth &&
-                          installment.dueDate.getFullYear() === currentYear;
-                        const isOverdue =
-                          !installment.isPaid &&
-                          installment.dueDate < new Date();
-
-                        return (
-                          <Card
-                            key={installment.id}
-                            className={`p-3 flex flex-col justify-between ${
-                              installment.isPaid
-                                ? 'bg-green-50 dark:bg-green-950/20'
-                                : ''
-                            } ${
-                              isCurrentMonth
-                                ? 'border-primary ring-2 ring-primary/50'
-                                : ''
-                            } ${
-                              isOverdue
-                                ? 'border-red-500 ring-2 ring-red-500/50'
-                                : ''
-                            }`}
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <p className="font-medium">
-                                Parcela {installment.installmentNumber}
+                          return (
+                            <Card
+                              key={installment.id}
+                              className={`p-3 flex flex-col justify-between ${
+                                installment.isPaid
+                                  ? 'bg-green-50 dark:bg-green-950/20'
+                                  : ''
+                              } ${
+                                isCurrentMonth
+                                  ? 'border-primary ring-2 ring-primary/50'
+                                  : ''
+                              } ${
+                                isOverdue
+                                  ? 'border-red-500 ring-2 ring-red-500/50'
+                                  : ''
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="font-medium">
+                                  Parcela {installment.installmentNumber}
+                                </p>
+                                <ToggleInstallmentButton
+                                  installmentId={installment.id}
+                                  isPaid={installment.isPaid}
+                                />
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                Vencimento:{' '}
+                                {format(installment.dueDate, 'dd/MM/yyyy', {
+                                  locale: ptBR,
+                                })}
                               </p>
-                              <ToggleInstallmentButton
-                                installmentId={installment.id}
-                                isPaid={installment.isPaid}
-                              />
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              Vencimento:{' '}
-                              {format(installment.dueDate, 'dd/MM/yyyy', {
-                                locale: ptBR,
-                              })}
-                            </p>
-                            <p className="text-lg font-bold">
-                              {formatCurrency(Number(installment.amount))}
-                            </p>
-                            <div className="mt-2 flex gap-1">
-                              {isCurrentMonth && <Badge>Mês Atual</Badge>}
-                              {isOverdue && (
-                                <Badge variant="destructive">Vencida</Badge>
-                              )}
-                              {installment.isPaid && (
-                                <Badge
-                                  variant="outline"
-                                  className="border-green-500 text-green-600 dark:text-green-400"
-                                >
-                                  Paga
-                                </Badge>
-                              )}
-                            </div>
-                          </Card>
-                        );
-                      },
-                    );
+                              <p
+                                className={`text-lg font-bold ${
+                                  installment.isPaid
+                                    ? 'text-green-600 dark:text-green-400'
+                                    : isOverdue
+                                      ? 'text-red-600 dark:text-red-400'
+                                      : 'text-muted-foreground'
+                                }`}
+                              >
+                                {formatCurrency(Number(installment.amount))}
+                              </p>
+                              <div className="mt-2 flex gap-1">
+                                {isCurrentMonth && <Badge>Mês Atual</Badge>}
+                                {isOverdue && (
+                                  <Badge variant="destructive">Vencida</Badge>
+                                )}
+                                {installment.isPaid && (
+                                  <Badge
+                                    variant="outline"
+                                    className="border-green-500 text-green-600 dark:text-green-400"
+                                  >
+                                    Paga
+                                  </Badge>
+                                )}
+                              </div>
+                            </Card>
+                          );
+                        },
+                      );
 
-                    return (
-                      <InstallmentCollapse
-                        totalCount={filteredInstallments.length}
-                      >
-                        {installmentCards}
-                      </InstallmentCollapse>
-                    );
-                  })()}
-                </CardContent>
-              </Card>
-            );
-          })}
+                      return (
+                        <InstallmentCollapse
+                          totalCount={filteredInstallments.length}
+                        >
+                          {installmentCards}
+                        </InstallmentCollapse>
+                      );
+                    })()}
+                  </CardContent>
+                </Card>
+              );
+            })}
 
-          <Suspense fallback={null}>
-            <Pagination
-              page={result.page}
-              totalPages={result.totalPages}
-              total={result.total}
-              basePath="/debts"
-            />
-          </Suspense>
-        </>
+            <Suspense fallback={null}>
+              <Pagination
+                page={result.page}
+                totalPages={result.totalPages}
+                total={result.total}
+                basePath="/debts"
+              />
+            </Suspense>
+
+            <BatchActionsBar />
+          </>
+        </BatchProvider>
       )}
     </div>
   );

@@ -22,6 +22,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { FormDescription } from '@/components/ui/form';
 import {
   creditCardSchema,
   type CreditCardFormData,
@@ -40,6 +41,9 @@ export default function CreditCardForm({ card }: CreditCardFormProps) {
     defaultValues: {
       name: card?.name ?? '',
       dueDay: card?.dueDay ?? undefined,
+      closingDay:
+        (card as CreditCardType & { closingDay?: number | null })?.closingDay ??
+        undefined,
     },
   });
 
@@ -116,6 +120,39 @@ export default function CreditCardForm({ card }: CreditCardFormProps) {
                       ref={field.ref}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="closingDay"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dia de Fechamento (Opcional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="Ex: 25 (para dia 25 do mês)"
+                      min="1"
+                      max="31"
+                      value={field.value ?? ''}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === ''
+                            ? undefined
+                            : e.target.valueAsNumber,
+                        )
+                      }
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Dia em que a fatura do cartão fecha. Usado para calcular
+                    ciclos de fatura.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

@@ -10,6 +10,12 @@ export const creditCardSchema = z.object({
     .int({ message: 'O dia de vencimento deve ser um número inteiro.' })
     .min(1, { message: 'O dia de vencimento deve ser entre 1 e 31.' })
     .max(31, { message: 'O dia de vencimento deve ser entre 1 e 31.' }),
+  closingDay: z
+    .number()
+    .int({ message: 'O dia de fechamento deve ser um número inteiro.' })
+    .min(1, { message: 'O dia de fechamento deve ser entre 1 e 31.' })
+    .max(31, { message: 'O dia de fechamento deve ser entre 1 e 31.' })
+    .nullish(),
 });
 
 export type CreditCardFormData = z.infer<typeof creditCardSchema>;
