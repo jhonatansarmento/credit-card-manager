@@ -108,7 +108,7 @@
 
 ## Sprint 7 — Correções & Polimento ✅
 
-> **Commit:** `pendente` — _feat: sprint 7 - corrections and polish_
+> **Commit:** `17d6be0` — _feat: sprint 7 - corrections and polish_
 
 | #    | Tarefa                                                                                             | Status |
 | ---- | -------------------------------------------------------------------------------------------------- | ------ |
