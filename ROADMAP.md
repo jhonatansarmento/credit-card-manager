@@ -125,23 +125,25 @@
 
 ---
 
-## Sprint 8 — Sidebar & Settings 🔲
+## Sprint 8 — Sidebar & Settings ✅
 
+> **Commit:** _(pending)_ — _feat: sprint 8 - sidebar & settings redesign_
+>
 > Redesign da navegação: trocar a navbar horizontal por uma **sidebar vertical fixa** (estilo Visor Finance),
 > com seções agrupadas, perfil do usuário na parte inferior e modal de configurações.
 
 | #    | Tarefa                                                                                                                                                                                                     | Status |
 | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 8.1  | Criar componente `Sidebar` vertical fixa à esquerda — logo no topo, links agrupados por seção ("Organização": Início, Dívidas; "Controle": Cartões, Nomes), ícones Lucide + texto, highlight do link ativo | 🔲     |
-| 8.2  | Card de perfil do usuário na parte inferior da sidebar — avatar (iniciais ou imagem), nome, email truncado, clicável para abrir configurações                                                              | 🔲     |
-| 8.3  | Sidebar collapsible — modo compacto (somente ícones, ~64px) com botão toggle; salvar preferência no `localStorage`                                                                                         | 🔲     |
-| 8.4  | Mobile: sidebar em drawer (slide-in da esquerda) com overlay, substituindo o menu hamburger atual; fechar ao navegar ou clicar fora                                                                        | 🔲     |
-| 8.5  | Modal/página de Configurações (`/settings`) com abas: **Geral** (aparência claro/escuro/sistema, idioma futuro), **Conta** (nome, email, avatar, trocar senha), **Sobre** (versão do app, link GitHub)     | 🔲     |
-| 8.6  | Mover `ThemeToggle` para dentro das Configurações > Geral — seletor de 3 opções (Claro / Sistema / Escuro) como segmented control, estilo Visor                                                            | 🔲     |
-| 8.7  | Botão de `SignOut` na sidebar inferior (abaixo do perfil) ou dentro do menu de perfil como dropdown com opções: "Configurações", "Sair"                                                                    | 🔲     |
-| 8.8  | Atualizar `layout.tsx` do `(authenticated)` — layout flex horizontal (`sidebar + main`), remover `<Navbar>`, ajustar padding do `<main>` para compensar largura da sidebar                                 | 🔲     |
-| 8.9  | Migrar breadcrumbs e título da página para um header bar dentro do `<main>` (ex: "Dashboard", "Dívidas") com botão toggle da sidebar à esquerda, similar ao header do Visor                                | 🔲     |
-| 8.10 | Remover componentes obsoletos (`navbar.tsx`, `nav-links.tsx`, `mobile-menu.tsx`) e atualizar todas as referências                                                                                          | 🔲     |
+| 8.1  | Criar componente `Sidebar` vertical fixa à esquerda — logo no topo, links agrupados por seção ("Organização": Início, Dívidas; "Controle": Cartões, Nomes), ícones Lucide + texto, highlight do link ativo | ✅     |
+| 8.2  | Card de perfil do usuário na parte inferior da sidebar — avatar (iniciais ou imagem), nome, email truncado, clicável para abrir configurações                                                              | ✅     |
+| 8.3  | Sidebar collapsible — modo compacto (somente ícones, ~64px) com botão toggle; salvar preferência no `localStorage`                                                                                         | ✅     |
+| 8.4  | Mobile: sidebar em drawer (slide-in da esquerda) com overlay, substituindo o menu hamburger atual; fechar ao navegar ou clicar fora                                                                        | ✅     |
+| 8.5  | Modal/página de Configurações (`/settings`) com abas: **Geral** (aparência claro/escuro/sistema, idioma futuro), **Conta** (nome, email, avatar, trocar senha), **Sobre** (versão do app, link GitHub)     | ✅     |
+| 8.6  | Mover `ThemeToggle` para dentro das Configurações > Geral — seletor de 3 opções (Claro / Sistema / Escuro) como segmented control, estilo Visor                                                            | ✅     |
+| 8.7  | Botão de `SignOut` na sidebar inferior (abaixo do perfil) ou dentro do menu de perfil como dropdown com opções: "Configurações", "Sair"                                                                    | ✅     |
+| 8.8  | Atualizar `layout.tsx` do `(authenticated)` — layout flex horizontal (`sidebar + main`), remover `<Navbar>`, ajustar padding do `<main>` para compensar largura da sidebar                                 | ✅     |
+| 8.9  | Migrar breadcrumbs e título da página para um header bar dentro do `<main>` (ex: "Dashboard", "Dívidas") com botão toggle da sidebar à esquerda, similar ao header do Visor                                | ✅     |
+| 8.10 | Remover componentes obsoletos (`navbar.tsx`, `nav-links.tsx`, `mobile-menu.tsx`) e atualizar todas as referências                                                                                          | ✅     |
 
 ---
 
@@ -208,12 +210,12 @@
 | 5      | Segurança & Infraestrutura | 7/7     | ✅ Concluído |
 | 6      | Features Avançadas         | 8/8     | ✅ Concluído |
 | 7      | Correções & Polimento      | 10/10   | ✅ Concluído |
-| 8      | Sidebar & Settings         | 0/10    | 🔲 Pendente  |
+| 8      | Sidebar & Settings         | 10/10   | ✅ Concluído |
 | 9      | Features de Produto        | 0/12    | 🔲 Pendente  |
 | 10     | Segurança & Autenticação   | 0/9     | 🔲 Pendente  |
 | 11     | Testes, Performance & DX   | 0/10    | 🔲 Pendente  |
 
-**Total: 57/98 tarefas concluídas (58%)**
+**Total: 67/98 tarefas concluídas (68%)**
 
 ---
 

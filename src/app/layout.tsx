@@ -1,5 +1,6 @@
-import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/theme-provider';
+import { Toaster } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import type { Metadata, Viewport } from 'next';
 import type React from 'react';
 import './globals.css';
@@ -40,7 +41,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <TooltipProvider delayDuration={0}>{children}</TooltipProvider>
           <Toaster />
         </ThemeProvider>
         <script
