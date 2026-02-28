@@ -73,19 +73,19 @@
 
 ---
 
-## Sprint 5 — Segurança & Infraestrutura 🔲
+## Sprint 5 — Segurança & Infraestrutura ✅
 
-> Hardening de segurança, rate limiting e melhorias de infraestrutura.
+> **Commit:** _(pendente)_ — _feat: sprint 5 - security and infrastructure hardening_
 
 | #   | Tarefa                                                                                           | Status |
 | --- | ------------------------------------------------------------------------------------------------ | ------ |
-| 5.1 | Validar body das API routes com schemas Zod compartilhados (reutilizar os de `src/lib/schemas/`) | 🔲     |
-| 5.2 | Rate limiting nas API routes (ex: `upstash/ratelimit` ou middleware customizado)                 | 🔲     |
-| 5.3 | Sanitização de inputs (prevenir XSS)                                                             | 🔲     |
-| 5.4 | Headers de segurança (CSP, X-Frame-Options, etc.) no `next.config.ts`                            | 🔲     |
-| 5.5 | Logging estruturado de erros (substituir console.error por logger)                               | 🔲     |
-| 5.6 | Tratamento global de erros com `error.tsx` boundary pages                                        | 🔲     |
-| 5.7 | Página `not-found.tsx` customizada                                                               | 🔲     |
+| 5.1 | Validar body das API routes com schemas Zod compartilhados (reutilizar os de `src/lib/schemas/`) | ✅     |
+| 5.2 | Rate limiting nas API routes (middleware customizado in-memory)                                  | ✅     |
+| 5.3 | Sanitização de inputs (prevenir XSS)                                                             | ✅     |
+| 5.4 | Headers de segurança (CSP, X-Frame-Options, etc.) no `next.config.ts`                            | ✅     |
+| 5.5 | Logging estruturado de erros (substituir console.error por logger)                               | ✅     |
+| 5.6 | Tratamento global de erros com `error.tsx` boundary pages                                        | ✅     |
+| 5.7 | Página `not-found.tsx` customizada                                                               | ✅     |
 
 ---
 
@@ -114,11 +114,11 @@
 | 2      | Arquitetura & Qualidade    | 9/9     | ✅ Concluído |
 | 3      | UX & Feedback Visual       | 8/8     | ✅ Concluído |
 | 4      | Dashboard & Analytics      | 6/6     | ✅ Concluído |
-| 5      | Segurança & Infraestrutura | 0/7     | 🔲 Pendente  |
+| 5      | Segurança & Infraestrutura | 7/7     | ✅ Concluído |
 | 6      | Features Avançadas         | 0/8     | 🔲 Pendente  |
 
-**Total: 32/47 tarefas concluídas (68%)**
+**Total: 39/47 tarefas concluídas (83%)**
 
 ---
 
-_Última atualização: 26/02/2026_
+_Última atualização: 28/02/2026_

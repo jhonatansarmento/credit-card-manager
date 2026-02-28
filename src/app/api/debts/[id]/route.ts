@@ -1,9 +1,10 @@
 import {
-  badRequest,
   getRouteSession,
+  parseBody,
   serverError,
   unauthorized,
 } from '@/lib/route-helpers';
+import { debtSchema } from '@/lib/schemas';
 import { deleteDebt, updateDebt } from '@/services/debt.service';
 import { NextResponse } from 'next/server';
 
@@ -16,51 +17,14 @@ export async function PUT(
 
   const { id } = await params;
 
-  let body: {
-    cardId?: string;
-    personCompanyId?: string;
-    totalAmount?: number;
-    installmentsQuantity?: number;
-    startDate?: string;
-    description?: string;
-  };
-  try {
-    body = await request.json();
-  } catch {
-    return badRequest('Body inválido.');
-  }
-
-  const {
-    cardId,
-    personCompanyId,
-    totalAmount,
-    installmentsQuantity,
-    startDate,
-    description,
-  } = body;
-
-  if (
-    !cardId ||
-    !personCompanyId ||
-    totalAmount === undefined ||
-    installmentsQuantity === undefined ||
-    !description
-  ) {
-    return badRequest('Todos os campos são obrigatórios.');
-  }
+  const parsed = await parseBody(request, debtSchema);
+  if (!parsed.success) return parsed.response;
 
   try {
-    const debt = await updateDebt(id, session.userId, {
-      cardId,
-      personCompanyId,
-      totalAmount: Number(totalAmount),
-      installmentsQuantity: Number(installmentsQuantity),
-      startDate: startDate ?? '',
-      description,
-    });
+    const debt = await updateDebt(id, session.userId, parsed.data);
     return NextResponse.json(debt);
   } catch (error) {
-    return serverError((error as Error).message);
+    return serverError(error, 'PUT /api/debts/[id]');
   }
 }
 
@@ -77,6 +41,6 @@ export async function DELETE(
     await deleteDebt(id, session.userId);
     return NextResponse.json({ success: true });
   } catch (error) {
-    return serverError((error as Error).message);
+    return serverError(error, 'DELETE /api/debts/[id]');
   }
 }

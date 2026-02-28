@@ -1,9 +1,10 @@
 import {
-  badRequest,
   getRouteSession,
+  parseBody,
   serverError,
   unauthorized,
 } from '@/lib/route-helpers';
+import { personCompanySchema } from '@/lib/schemas';
 import { deleteName, updateName } from '@/services/name.service';
 import { NextResponse } from 'next/server';
 
@@ -16,20 +17,14 @@ export async function PUT(
 
   const { id } = await params;
 
-  let body: { name?: string };
-  try {
-    body = await request.json();
-  } catch {
-    return badRequest('Body inválido.');
-  }
-
-  if (!body.name) return badRequest('Nome é obrigatório.');
+  const parsed = await parseBody(request, personCompanySchema);
+  if (!parsed.success) return parsed.response;
 
   try {
-    const name = await updateName(id, session.userId, { name: body.name });
+    const name = await updateName(id, session.userId, parsed.data);
     return NextResponse.json(name);
   } catch (error) {
-    return serverError((error as Error).message);
+    return serverError(error, 'PUT /api/names/[id]');
   }
 }
 
@@ -46,6 +41,6 @@ export async function DELETE(
     await deleteName(id, session.userId);
     return NextResponse.json({ success: true });
   } catch (error) {
-    return serverError((error as Error).message);
+    return serverError(error, 'DELETE /api/names/[id]');
   }
 }

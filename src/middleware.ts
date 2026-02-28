@@ -1,12 +1,30 @@
+import { rateLimit } from '@/lib/rate-limit';
 import { getSessionCookie } from 'better-auth/cookies';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Ignora rotas de autenticação do Better Auth
-  if (pathname.startsWith('/api/auth')) {
-    return NextResponse.next();
+  // Rate limiting para rotas de API
+  if (pathname.startsWith('/api')) {
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+      'anonymous';
+    const key = `${ip}:${pathname}`;
+
+    // Limite mais restritivo para rotas de autenticação
+    const isAuthRoute = pathname.startsWith('/api/auth');
+    const limited = rateLimit(key, {
+      limit: isAuthRoute ? 10 : 30,
+      windowMs: 60_000,
+    });
+
+    if (limited) return limited;
+
+    // Ignora rotas de autenticação do Better Auth (sem verificar sessionCookie)
+    if (isAuthRoute) {
+      return NextResponse.next();
+    }
   }
 
   const sessionCookie = getSessionCookie(request);

@@ -19,6 +19,6 @@ export async function PATCH(
     const installment = await toggleInstallmentPaid(id, session.userId);
     return NextResponse.json(installment);
   } catch (error) {
-    return serverError((error as Error).message);
+    return serverError(error, 'PATCH /api/debts/installments/[id]');
   }
 }

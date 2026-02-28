@@ -1,9 +1,10 @@
 import {
-  badRequest,
   getRouteSession,
+  parseBody,
   serverError,
   unauthorized,
 } from '@/lib/route-helpers';
+import { creditCardSchema } from '@/lib/schemas';
 import {
   createCreditCard,
   listCreditCards,
@@ -22,24 +23,13 @@ export async function POST(request: Request) {
   const session = await getRouteSession();
   if (!session) return unauthorized();
 
-  let body: { name?: string; dueDay?: number };
-  try {
-    body = await request.json();
-  } catch {
-    return badRequest('Body inválido.');
-  }
-
-  const { name, dueDay } = body;
-  if (!name || !dueDay)
-    return badRequest('Nome e dia de vencimento são obrigatórios.');
+  const parsed = await parseBody(request, creditCardSchema);
+  if (!parsed.success) return parsed.response;
 
   try {
-    const card = await createCreditCard(session.userId, {
-      name,
-      dueDay: Number(dueDay),
-    });
+    const card = await createCreditCard(session.userId, parsed.data);
     return NextResponse.json(card, { status: 201 });
   } catch (error) {
-    return serverError((error as Error).message);
+    return serverError(error, 'POST /api/cards');
   }
 }

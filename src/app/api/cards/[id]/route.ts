@@ -1,9 +1,10 @@
 import {
-  badRequest,
   getRouteSession,
+  parseBody,
   serverError,
   unauthorized,
 } from '@/lib/route-helpers';
+import { creditCardSchema } from '@/lib/schemas';
 import {
   deleteCreditCard,
   updateCreditCard,
@@ -19,25 +20,14 @@ export async function PUT(
 
   const { id } = await params;
 
-  let body: { name?: string; dueDay?: number };
-  try {
-    body = await request.json();
-  } catch {
-    return badRequest('Body inválido.');
-  }
-
-  const { name, dueDay } = body;
-  if (!name || !dueDay)
-    return badRequest('Nome e dia de vencimento são obrigatórios.');
+  const parsed = await parseBody(request, creditCardSchema);
+  if (!parsed.success) return parsed.response;
 
   try {
-    const card = await updateCreditCard(id, session.userId, {
-      name,
-      dueDay: Number(dueDay),
-    });
+    const card = await updateCreditCard(id, session.userId, parsed.data);
     return NextResponse.json(card);
   } catch (error) {
-    return serverError((error as Error).message);
+    return serverError(error, 'PUT /api/cards/[id]');
   }
 }
 
@@ -54,6 +44,6 @@ export async function DELETE(
     await deleteCreditCard(id, session.userId);
     return NextResponse.json({ success: true });
   } catch (error) {
-    return serverError((error as Error).message);
+    return serverError(error, 'DELETE /api/cards/[id]');
   }
 }
