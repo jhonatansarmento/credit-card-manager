@@ -51,65 +51,119 @@ export default async function PersonCompaniesPage() {
           </div>
         </Card>
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Dívidas</TableHead>
-                  <TableHead>Pendente</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {personCompanies.map((pc) => {
-                  const pendingAmount = pc.debts.reduce(
-                    (sum, debt) =>
-                      sum +
-                      debt.installments.reduce(
-                        (s, inst) => s + Number(inst.amount),
-                        0,
-                      ),
-                    0,
-                  );
+        <>
+          {/* Desktop: Table */}
+          <Card className="hidden md:block">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Dívidas</TableHead>
+                    <TableHead>Pendente</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {personCompanies.map((pc) => {
+                    const pendingAmount = pc.debts.reduce(
+                      (sum, debt) =>
+                        sum +
+                        debt.installments.reduce(
+                          (s, inst) => s + Number(inst.amount),
+                          0,
+                        ),
+                      0,
+                    );
 
-                  return (
-                    <TableRow key={pc.id}>
-                      <TableCell className="font-medium">{pc.name}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {pc._count.debts}{' '}
-                          {pc._count.debts === 1 ? 'dívida' : 'dívidas'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {pendingAmount > 0 ? (
-                          <span className="text-destructive font-medium">
-                            {formatCurrency(pendingAmount)}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="outline" size="icon" asChild>
-                            <Link href={`/names/${pc.id}/edit`}>
-                              <Pencil className="h-4 w-4" />
-                              <span className="sr-only">Editar</span>
-                            </Link>
-                          </Button>
-                          <DeleteButton endpoint={`/api/names/${pc.id}`} />
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                    return (
+                      <TableRow key={pc.id}>
+                        <TableCell className="font-medium">{pc.name}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">
+                            {pc._count.debts}{' '}
+                            {pc._count.debts === 1 ? 'dívida' : 'dívidas'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {pendingAmount > 0 ? (
+                            <span className="text-destructive font-medium">
+                              {formatCurrency(pendingAmount)}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" size="icon" asChild>
+                              <Link href={`/names/${pc.id}/edit`}>
+                                <Pencil className="h-4 w-4" />
+                                <span className="sr-only">Editar</span>
+                              </Link>
+                            </Button>
+                            <DeleteButton endpoint={`/api/names/${pc.id}`} />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Mobile: Card layout */}
+          <div className="grid gap-3 md:hidden">
+            {personCompanies.map((pc) => {
+              const pendingAmount = pc.debts.reduce(
+                (sum, debt) =>
+                  sum +
+                  debt.installments.reduce(
+                    (s, inst) => s + Number(inst.amount),
+                    0,
+                  ),
+                0,
+              );
+
+              return (
+                <Card key={pc.id} className="p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium">{pc.name}</p>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        asChild
+                      >
+                        <Link href={`/names/${pc.id}/edit`}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Link>
+                      </Button>
+                      <DeleteButton endpoint={`/api/names/${pc.id}`} />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t">
+                    <Badge variant="secondary">
+                      {pc._count.debts}{' '}
+                      {pc._count.debts === 1 ? 'dívida' : 'dívidas'}
+                    </Badge>
+                    {pendingAmount > 0 ? (
+                      <span className="text-sm text-destructive font-medium">
+                        {formatCurrency(pendingAmount)}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">
+                        Sem pendências
+                      </span>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );

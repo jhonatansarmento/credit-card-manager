@@ -228,19 +228,37 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                   key={debt.id}
                   className={`mb-4 ${debt.isArchived ? 'opacity-60' : ''}`}
                 >
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <BatchCheckbox debtId={debt.id} />
-                      <Link
-                        href={`/debts/${debt.id}`}
-                        className="hover:underline"
-                      >
-                        <CardTitle className="text-lg font-medium">
-                          {debt.description}
-                        </CardTitle>
-                      </Link>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <BatchCheckbox debtId={debt.id} />
+                        <Link
+                          href={`/debts/${debt.id}`}
+                          className="hover:underline min-w-0"
+                        >
+                          <CardTitle className="text-lg font-medium truncate">
+                            {debt.description}
+                          </CardTitle>
+                        </Link>
+                      </div>
+                      <DebtActionsMenu
+                        debtId={debt.id}
+                        isArchived={debt.isArchived}
+                        allPaid={allPaid}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap mt-1">
+                      <div className="flex items-center gap-1.5">
+                        <CardBrandBadge name={debt.creditCard.name} size={22} />
+                        <span className="text-sm text-muted-foreground">
+                          {debt.creditCard.name}
+                        </span>
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {debt.personCompany.name}
+                      </Badge>
                       {debt.isArchived && (
-                        <Badge variant="secondary">
+                        <Badge variant="secondary" className="text-xs">
                           <Archive className="h-3 w-3 mr-1" />
                           Arquivada
                         </Badge>
@@ -248,7 +266,7 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                       {debt.isRecurring && (
                         <Badge
                           variant="outline"
-                          className="border-purple-500 text-purple-600 dark:text-purple-400"
+                          className="text-xs border-purple-500 text-purple-600 dark:text-purple-400"
                         >
                           <RefreshCw className="h-3 w-3 mr-1" />
                           Recorrente
@@ -257,25 +275,12 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                       {debt.category && (
                         <Badge
                           variant="outline"
+                          className="text-xs"
                           style={{ borderColor: debt.category.color }}
                         >
                           {debt.category.emoji} {debt.category.name}
                         </Badge>
                       )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <CardBrandBadge name={debt.creditCard.name} size={28} />
-                        <span className="text-sm font-medium">
-                          {debt.creditCard.name}
-                        </span>
-                      </div>
-                      <Badge variant="outline">{debt.personCompany.name}</Badge>
-                      <DebtActionsMenu
-                        debtId={debt.id}
-                        isArchived={debt.isArchived}
-                        allPaid={allPaid}
-                      />
                     </div>
                   </CardHeader>
                   <CardContent>

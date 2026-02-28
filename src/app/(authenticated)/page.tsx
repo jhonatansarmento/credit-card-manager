@@ -440,62 +440,122 @@ export default async function HomePage() {
                 </Button>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Cartão</TableHead>
-                      <TableHead>Pessoa/Empresa</TableHead>
-                      <TableHead>Parcela</TableHead>
-                      <TableHead>Vencimento</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {overdue.map((inst) => {
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const dueDate = new Date(inst.dueDate);
-                      const diffDays = Math.ceil(
-                        (today.getTime() - dueDate.getTime()) /
-                          (1000 * 60 * 60 * 24),
-                      );
+                {/* Desktop table */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Cartão</TableHead>
+                        <TableHead>Pessoa/Empresa</TableHead>
+                        <TableHead>Parcela</TableHead>
+                        <TableHead>Vencimento</TableHead>
+                        <TableHead className="text-right">Valor</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {overdue.map((inst) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const dueDate = new Date(inst.dueDate);
+                        const diffDays = Math.ceil(
+                          (today.getTime() - dueDate.getTime()) /
+                            (1000 * 60 * 60 * 24),
+                        );
 
-                      return (
-                        <TableRow key={inst.id}>
-                          <TableCell className="font-medium">
+                        return (
+                          <TableRow key={inst.id}>
+                            <TableCell className="font-medium">
+                              {inst.debtDescription}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1.5">
+                                <CardBrandBadge
+                                  name={inst.cardName}
+                                  size={20}
+                                />
+                                <span className="text-sm">{inst.cardName}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>{inst.personName}</TableCell>
+                            <TableCell>
+                              {inst.installmentNumber}/{inst.totalInstallments}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {format(inst.dueDate, 'dd/MM/yyyy', {
+                                  locale: ptBR,
+                                })}
+                                <Badge
+                                  variant="destructive"
+                                  className="text-xs"
+                                >
+                                  {diffDays === 1
+                                    ? '1 dia atrás'
+                                    : `${diffDays} dias atrás`}
+                                </Badge>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right font-semibold text-destructive">
+                              {formatCurrency(inst.amount)}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+                {/* Mobile cards */}
+                <div className="grid gap-3 md:hidden">
+                  {overdue.map((inst) => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const dueDate = new Date(inst.dueDate);
+                    const diffDays = Math.ceil(
+                      (today.getTime() - dueDate.getTime()) /
+                        (1000 * 60 * 60 * 24),
+                    );
+                    return (
+                      <div
+                        key={inst.id}
+                        className="border rounded-lg p-3 space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-sm truncate">
                             {inst.debtDescription}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1.5">
-                              <CardBrandBadge name={inst.cardName} size={20} />
-                              <span className="text-sm">{inst.cardName}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>{inst.personName}</TableCell>
-                          <TableCell>
-                            {inst.installmentNumber}/{inst.totalInstallments}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {format(inst.dueDate, 'dd/MM/yyyy', {
-                                locale: ptBR,
-                              })}
-                              <Badge variant="destructive" className="text-xs">
-                                {diffDays === 1
-                                  ? '1 dia atrás'
-                                  : `${diffDays} dias atrás`}
-                              </Badge>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right font-semibold text-destructive">
+                          </p>
+                          <span className="font-semibold text-destructive text-sm">
                             {formatCurrency(inst.amount)}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <CardBrandBadge name={inst.cardName} size={16} />
+                            <span>{inst.cardName}</span>
+                          </div>
+                          <span>•</span>
+                          <span>{inst.personName}</span>
+                          <span>•</span>
+                          <span>
+                            {inst.installmentNumber}/{inst.totalInstallments}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs">
+                            {format(inst.dueDate, 'dd/MM/yyyy', {
+                              locale: ptBR,
+                            })}
+                          </span>
+                          <Badge variant="destructive" className="text-xs">
+                            {diffDays === 1
+                              ? '1 dia atrás'
+                              : `${diffDays} dias atrás`}
+                          </Badge>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </CardContent>
             </Card>
           )}
@@ -522,18 +582,82 @@ export default async function HomePage() {
                   Nenhuma parcela pendente
                 </p>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Cartão</TableHead>
-                      <TableHead>Pessoa/Empresa</TableHead>
-                      <TableHead>Parcela</TableHead>
-                      <TableHead>Vencimento</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                <>
+                  {/* Desktop table */}
+                  <div className="hidden md:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Descrição</TableHead>
+                          <TableHead>Cartão</TableHead>
+                          <TableHead>Pessoa/Empresa</TableHead>
+                          <TableHead>Parcela</TableHead>
+                          <TableHead>Vencimento</TableHead>
+                          <TableHead className="text-right">Valor</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {upcoming.map((inst) => {
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const dueDate = new Date(inst.dueDate);
+                          const diffDays = Math.ceil(
+                            (dueDate.getTime() - today.getTime()) /
+                              (1000 * 60 * 60 * 24),
+                          );
+                          const isUrgent = diffDays <= 7;
+
+                          return (
+                            <TableRow key={inst.id}>
+                              <TableCell className="font-medium">
+                                {inst.debtDescription}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1.5">
+                                  <CardBrandBadge
+                                    name={inst.cardName}
+                                    size={20}
+                                  />
+                                  <span className="text-sm">
+                                    {inst.cardName}
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell>{inst.personName}</TableCell>
+                              <TableCell>
+                                {inst.installmentNumber}/
+                                {inst.totalInstallments}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  {format(inst.dueDate, 'dd/MM/yyyy', {
+                                    locale: ptBR,
+                                  })}
+                                  {isUrgent && (
+                                    <Badge
+                                      variant="destructive"
+                                      className="text-xs"
+                                    >
+                                      {diffDays === 0
+                                        ? 'Hoje'
+                                        : diffDays === 1
+                                          ? 'Amanhã'
+                                          : `${diffDays} dias`}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right font-semibold">
+                                {formatCurrency(inst.amount)}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {/* Mobile cards */}
+                  <div className="grid gap-3 md:hidden">
                     {upcoming.map((inst) => {
                       const today = new Date();
                       today.setHours(0, 0, 0, 0);
@@ -543,49 +667,52 @@ export default async function HomePage() {
                           (1000 * 60 * 60 * 24),
                       );
                       const isUrgent = diffDays <= 7;
-
                       return (
-                        <TableRow key={inst.id}>
-                          <TableCell className="font-medium">
-                            {inst.debtDescription}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1.5">
-                              <CardBrandBadge name={inst.cardName} size={20} />
-                              <span className="text-sm">{inst.cardName}</span>
+                        <div
+                          key={inst.id}
+                          className="border rounded-lg p-3 space-y-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium text-sm truncate">
+                              {inst.debtDescription}
+                            </p>
+                            <span className="font-semibold text-sm">
+                              {formatCurrency(inst.amount)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <CardBrandBadge name={inst.cardName} size={16} />
+                              <span>{inst.cardName}</span>
                             </div>
-                          </TableCell>
-                          <TableCell>{inst.personName}</TableCell>
-                          <TableCell>
-                            {inst.installmentNumber}/{inst.totalInstallments}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
+                            <span>•</span>
+                            <span>{inst.personName}</span>
+                            <span>•</span>
+                            <span>
+                              {inst.installmentNumber}/{inst.totalInstallments}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs">
                               {format(inst.dueDate, 'dd/MM/yyyy', {
                                 locale: ptBR,
                               })}
-                              {isUrgent && (
-                                <Badge
-                                  variant="destructive"
-                                  className="text-xs"
-                                >
-                                  {diffDays === 0
-                                    ? 'Hoje'
-                                    : diffDays === 1
-                                      ? 'Amanhã'
-                                      : `${diffDays} dias`}
-                                </Badge>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right font-semibold">
-                            {formatCurrency(inst.amount)}
-                          </TableCell>
-                        </TableRow>
+                            </span>
+                            {isUrgent && (
+                              <Badge variant="destructive" className="text-xs">
+                                {diffDays === 0
+                                  ? 'Hoje'
+                                  : diffDays === 1
+                                    ? 'Amanhã'
+                                    : `${diffDays} dias`}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
                       );
                     })}
-                  </TableBody>
-                </Table>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
