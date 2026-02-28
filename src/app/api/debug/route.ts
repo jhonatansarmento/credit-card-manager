@@ -1,3 +1,4 @@
+import { neon } from '@neondatabase/serverless';
 import prisma from '@/lib/db';
 import { NextResponse } from 'next/server';
 
@@ -31,15 +32,24 @@ export async function GET() {
       : 'undefined',
   };
 
-  // 2. Testar conexão com o banco de dados
+  // 2. Testar conexão direta com o driver Neon (sem Prisma)
   try {
-    await prisma.$queryRaw`SELECT 1 as test`;
-    checks.database = '✅ Conexão OK';
+    const sql = neon(process.env.DATABASE_URL!);
+    const result = await sql`SELECT 1 as test`;
+    checks.neonDirect = `✅ Conexão direta OK: ${JSON.stringify(result)}`;
   } catch (error) {
-    checks.database = `❌ Erro: ${error instanceof Error ? error.message : String(error)}`;
+    checks.neonDirect = `❌ Erro direto Neon: ${error instanceof Error ? error.message : String(error)}`;
   }
 
-  // 3. Verificar tabelas do Better Auth
+  // 3. Testar conexão via Prisma adapter
+  try {
+    await prisma.$queryRaw`SELECT 1 as test`;
+    checks.prisma = '✅ Prisma Conexão OK';
+  } catch (error) {
+    checks.prisma = `❌ Erro Prisma: ${error instanceof Error ? error.message : String(error)}`;
+  }
+
+  // 4. Verificar tabelas do Better Auth
   try {
     const userCount = await prisma.user.count();
     const sessionCount = await prisma.session.count();
