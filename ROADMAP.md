@@ -89,20 +89,20 @@
 
 ---
 
-## Sprint 6 — Features Avançadas 🔲
+## Sprint 6 — Features Avançadas ✅
 
-> Funcionalidades extras para completar o produto.
+> **Commit:** `pending` — _feat: sprint 6 - advanced features_
 
 | #   | Tarefa                                                    | Status |
 | --- | --------------------------------------------------------- | ------ |
-| 6.1 | Exportar dívidas/parcelas em CSV                          | 🔲     |
-| 6.2 | Paginação nas listagens (debts, cards, names)             | 🔲     |
-| 6.3 | Ordenação nas tabelas (por nome, data, valor)             | 🔲     |
-| 6.4 | Busca por texto na listagem de dívidas (por descrição)    | 🔲     |
-| 6.5 | "Quitar todas as parcelas" de uma dívida de uma vez       | 🔲     |
-| 6.6 | Duplicar dívida (criar nova com mesmos dados)             | 🔲     |
-| 6.7 | Soft delete (arquivar dívidas quitadas em vez de excluir) | 🔲     |
-| 6.8 | PWA com notificações de parcelas próximas do vencimento   | 🔲     |
+| 6.1 | Exportar dívidas/parcelas em CSV                          | ✅     |
+| 6.2 | Paginação nas listagens (debts, cards, names)             | ✅     |
+| 6.3 | Ordenação nas tabelas (por nome, data, valor)             | ✅     |
+| 6.4 | Busca por texto na listagem de dívidas (por descrição)    | ✅     |
+| 6.5 | "Quitar todas as parcelas" de uma dívida de uma vez       | ✅     |
+| 6.6 | Duplicar dívida (criar nova com mesmos dados)             | ✅     |
+| 6.7 | Soft delete (arquivar dívidas quitadas em vez de excluir) | ✅     |
+| 6.8 | PWA com notificações de parcelas próximas do vencimento   | ✅     |
 
 ---
 
@@ -115,9 +115,9 @@
 | 3      | UX & Feedback Visual       | 8/8     | ✅ Concluído |
 | 4      | Dashboard & Analytics      | 6/6     | ✅ Concluído |
 | 5      | Segurança & Infraestrutura | 7/7     | ✅ Concluído |
-| 6      | Features Avançadas         | 0/8     | 🔲 Pendente  |
+| 6      | Features Avançadas         | 8/8     | ✅ Concluído |
 
-**Total: 39/47 tarefas concluídas (83%)**
+**Total: 47/47 tarefas concluídas (100%)**
 
 ---
 

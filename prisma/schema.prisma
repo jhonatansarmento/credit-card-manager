@@ -70,6 +70,7 @@ model Debt {
   installmentValue     Decimal       @db.Decimal(10, 2)
   startDate            DateTime      @default(now()) @db.Date // Armazena apenas a data
   description          String
+  isArchived           Boolean       @default(false)
 
   installments Installment[]
 

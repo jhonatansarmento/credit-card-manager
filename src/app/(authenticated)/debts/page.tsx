@@ -1,6 +1,8 @@
 import CardBrandBadge from '@/components/card-brand-badge';
+import DebtActions from '@/components/debt-actions';
 import DebtFilters from '@/components/debt-filters';
 import DeleteButton from '@/components/delete-button';
+import Pagination from '@/components/pagination';
 import ToggleInstallmentButton from '@/components/toggle-installment-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,7 +21,7 @@ import { listDebts } from '@/services/debt.service';
 import { listNames } from '@/services/name.service';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Pencil, PlusCircle, SearchX, Wallet } from 'lucide-react';
+import { Archive, Pencil, PlusCircle, SearchX, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
@@ -29,6 +31,11 @@ interface DebtsPageProps {
     personCompanyId?: string;
     month?: string;
     year?: string;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: string;
+    page?: string;
+    showArchived?: string;
   }>;
 }
 
@@ -37,17 +44,48 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
   const session = await getAuthSession();
   const userId = session.user.id;
 
-  const { cardId, personCompanyId, month, year } = resolvedSearchParams;
+  const {
+    cardId,
+    personCompanyId,
+    month,
+    year,
+    search,
+    sortBy,
+    sortOrder,
+    page: pageStr,
+    showArchived: showArchivedStr,
+  } = resolvedSearchParams;
 
-  const [creditCards, personCompanies, debts] = await Promise.all([
+  const page = pageStr ? parseInt(pageStr) : 1;
+  const showArchived = showArchivedStr === 'true';
+
+  const [creditCards, personCompanies, result] = await Promise.all([
     listCreditCards(userId),
     listNames(userId),
-    listDebts(userId, { cardId, personCompanyId, month, year }),
+    listDebts(userId, {
+      cardId,
+      personCompanyId,
+      month,
+      year,
+      search,
+      sortBy,
+      sortOrder,
+      page,
+      showArchived,
+    }),
   ]);
 
+  const debts = result.data;
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
-  const hasFilters = !!(cardId || personCompanyId || month || year);
+  const hasFilters = !!(
+    cardId ||
+    personCompanyId ||
+    month ||
+    year ||
+    search ||
+    showArchived
+  );
 
   // Calcula o total das parcelas exibidas (considerando o filtro de mês/ano)
   const totalAmountDisplayed = debts.reduce((sum, debt) => {
@@ -92,6 +130,10 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
           initialPersonCompanyId={personCompanyId}
           initialMonth={month}
           initialYear={year}
+          initialSearch={search}
+          initialSortBy={sortBy}
+          initialSortOrder={sortOrder}
+          initialShowArchived={showArchived}
         />
       </Suspense>
 
@@ -153,13 +195,25 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
             const totalCount = debt.installments.length;
             const progressPercent =
               totalCount > 0 ? (paidCount / totalCount) * 100 : 0;
+            const allPaid = paidCount === totalCount && totalCount > 0;
 
             return (
-              <Card key={debt.id} className="mb-4">
+              <Card
+                key={debt.id}
+                className={`mb-4 ${debt.isArchived ? 'opacity-60' : ''}`}
+              >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-lg font-medium">
-                    {debt.description}
-                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-lg font-medium">
+                      {debt.description}
+                    </CardTitle>
+                    {debt.isArchived && (
+                      <Badge variant="secondary">
+                        <Archive className="h-3 w-3 mr-1" />
+                        Arquivada
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1.5">
                       <CardBrandBadge name={debt.creditCard.name} size={28} />
@@ -168,6 +222,11 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                       </span>
                     </div>
                     <Badge variant="outline">{debt.personCompany.name}</Badge>
+                    <DebtActions
+                      debtId={debt.id}
+                      isArchived={debt.isArchived}
+                      allPaid={allPaid}
+                    />
                     <Button variant="outline" size="icon" asChild>
                       <Link href={`/debts/${debt.id}/edit`}>
                         <Pencil className="h-4 w-4" />
@@ -274,6 +333,15 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
               </Card>
             );
           })}
+
+          <Suspense fallback={null}>
+            <Pagination
+              page={result.page}
+              totalPages={result.totalPages}
+              total={result.total}
+              basePath="/debts"
+            />
+          </Suspense>
         </>
       )}
     </div>

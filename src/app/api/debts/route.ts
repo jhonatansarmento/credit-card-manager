@@ -19,10 +19,20 @@ export async function GET(request: NextRequest) {
     personCompanyId: searchParams.get('personCompanyId') ?? undefined,
     month: searchParams.get('month') ?? undefined,
     year: searchParams.get('year') ?? undefined,
+    search: searchParams.get('search') ?? undefined,
+    sortBy: searchParams.get('sortBy') ?? undefined,
+    sortOrder: searchParams.get('sortOrder') ?? undefined,
+    page: searchParams.get('page')
+      ? parseInt(searchParams.get('page')!)
+      : undefined,
+    pageSize: searchParams.get('pageSize')
+      ? parseInt(searchParams.get('pageSize')!)
+      : undefined,
+    showArchived: searchParams.get('showArchived') === 'true',
   };
 
-  const debts = await listDebts(session.userId, filters);
-  return NextResponse.json(debts);
+  const result = await listDebts(session.userId, filters);
+  return NextResponse.json(result);
 }
 
 export async function POST(request: Request) {
