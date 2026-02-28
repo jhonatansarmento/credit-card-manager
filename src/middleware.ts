@@ -2,8 +2,14 @@ import { getSessionCookie } from 'better-auth/cookies';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  const sessionCookie = getSessionCookie(request);
   const { pathname } = request.nextUrl;
+
+  // Ignora rotas de autenticação do Better Auth
+  if (pathname.startsWith('/api/auth')) {
+    return NextResponse.next();
+  }
+
+  const sessionCookie = getSessionCookie(request);
 
   // Rotas protegidas
   const protectedPaths = ['/cards', '/names', '/debts'];
