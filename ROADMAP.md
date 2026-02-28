@@ -91,7 +91,7 @@
 
 ## Sprint 6 — Features Avançadas ✅
 
-> **Commit:** `pending` — _feat: sprint 6 - advanced features_
+> **Commit:** `19c3288` — _feat: sprint 6 - advanced features_
 
 | #   | Tarefa                                                    | Status |
 | --- | --------------------------------------------------------- | ------ |
