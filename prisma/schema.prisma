@@ -33,7 +33,7 @@ model CreditCard {
   user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   name       String
   dueDay     Int // Dia de vencimento da fatura (1-31)
-  closingDay Int?   // Dia de fechamento da fatura (1-31)
+  closingDay Int? // Dia de fechamento da fatura (1-31)
 
   debts Debt[]
 
@@ -107,12 +107,12 @@ model Installment {
 }
 
 model Category {
-  id       String  @id @default(cuid())
+  id       String     @id @default(cuid())
   userId   String
-  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   name     String
-  emoji    String  @default("📁")
-  color    String  @default("#6B7280") // Cor hex para badge
+  emoji    String     @default("📁")
+  color    String     @default("#6B7280") // Cor hex para badge
   parentId String?
   parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   children Category[] @relation("CategoryHierarchy")

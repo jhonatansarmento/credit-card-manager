@@ -127,7 +127,7 @@
 
 ## Sprint 8 — Sidebar & Settings ✅
 
-> **Commit:** _(pending)_ — _feat: sprint 8 - sidebar & settings redesign_
+> **Commit:** `04ea020` + `0aabf7f` — _feat: sprint 8 - sidebar & settings redesign_
 >
 > Redesign da navegação: trocar a navbar horizontal por uma **sidebar vertical fixa** (estilo Visor Finance),
 > com seções agrupadas, perfil do usuário na parte inferior e modal de configurações.
@@ -147,22 +147,24 @@
 
 ---
 
-## Sprint 9 — Features de Produto 🔲
+## Sprint 9 — Features de Produto ✅
+
+> **Commit:** `dba9086` — _feat: sprint 9 - product features - categories, debt detail, batch actions, charts_
 
 | #    | Tarefa                                                                                                                                                                                                             | Status |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
-| 9.1  | Página de detalhe da dívida (`/debts/[id]`) — timeline visual de pagamentos agrupada por mês (estilo Visor Recorrentes), com progresso da parcela (ex: "3/12"), badges de status e link para edição rápida         | 🔲     |
-| 9.2  | Filtro de período no dashboard — navegador "◄ Fevereiro 2026 ►" nos gráficos + cards com **variação % vs mês anterior** (ex: "+32.2%" verde/vermelho, inspirado no Ritmo de Gastos do Visor)                       | 🔲     |
-| 9.3  | Preview de parcelas antes de criar dívida — tabela prévia com datas, valores e número de cada parcela que será gerada, similar à seção "Parcelamentos" da Projeção do Visor                                        | 🔲     |
-| 9.4  | Sistema de categorias nas dívidas com emojis e hierarquia (ex: 🛍️ Compras → 📚 Livraria, 💻 Eletrônicos) — migration, CRUD de categorias, filtro, badge colorido e regras simples de auto-categorização            | 🔲     |
-| 9.5  | Criação inline de cartão/nome dentro do formulário de dívida (dialog/popover sem navegar para outra página)                                                                                                        | 🔲     |
-| 9.6  | Campo `closingDay` no cartão + resumo de fatura por cartão — card mostrando total da fatura do ciclo atual com contagem de parcelas e compras (ex: "R$ 3.302,40 — 17 parcelas · 18 compras", estilo Faturas Visor) | 🔲     |
-| 9.7  | Gráfico donut de distribuição de gastos por categoria no dashboard (recharts `PieChart`) com breakdown de valores e percentuais, inspirado na página Relatórios do Visor                                           | 🔲     |
-| 9.8  | Dívidas recorrentes — modelo para assinaturas que se renovam automaticamente, com seção separada na listagem e badge "Recorrente"                                                                                  | 🔲     |
-| 9.9  | Ação em lote na listagem de dívidas: selecionar múltiplas via checkbox e arquivar/quitar todas de uma vez                                                                                                          | 🔲     |
-| 9.10 | Relatório mensal (`/reports`) — donut de categorias + resultado parcial (receita vs gasto) + **diagrama Sankey** de fluxo de gastos (Cartão → Categoria → Subcategoria, recharts Sankey), exportável em CSV        | 🔲     |
-| 9.11 | Projeção de quitação — gráfico de barras mostrando parcelas futuras mês a mês com linha pontilhada de saldo projetado, indicando quando cada dívida será quitada (inspirado na Projeção do Visor)                  | 🔲     |
-| 9.12 | Valores coloridos na listagem — verde para parcelas pagas, vermelho para vencidas, cinza para futuras + resumo no topo da listagem (total pago / total pendente / total vencido)                                   | 🔲     |
+| 9.1  | Página de detalhe da dívida (`/debts/[id]`) — timeline visual de pagamentos agrupada por mês (estilo Visor Recorrentes), com progresso da parcela (ex: "3/12"), badges de status e link para edição rápida         | ✅     |
+| 9.2  | Filtro de período no dashboard — navegador "◄ Fevereiro 2026 ►" nos gráficos + cards com **variação % vs mês anterior** (ex: "+32.2%" verde/vermelho, inspirado no Ritmo de Gastos do Visor)                       | ✅     |
+| 9.3  | Preview de parcelas antes de criar dívida — tabela prévia com datas, valores e número de cada parcela que será gerada, similar à seção "Parcelamentos" da Projeção do Visor                                        | ✅     |
+| 9.4  | Sistema de categorias nas dívidas com emojis e hierarquia (ex: 🛍️ Compras → 📚 Livraria, 💻 Eletrônicos) — migration, CRUD de categorias, filtro, badge colorido e regras simples de auto-categorização            | ✅     |
+| 9.5  | Criação inline de cartão/nome dentro do formulário de dívida (dialog/popover sem navegar para outra página)                                                                                                        | ✅     |
+| 9.6  | Campo `closingDay` no cartão + resumo de fatura por cartão — card mostrando total da fatura do ciclo atual com contagem de parcelas e compras (ex: "R$ 3.302,40 — 17 parcelas · 18 compras", estilo Faturas Visor) | ✅     |
+| 9.7  | Gráfico donut de distribuição de gastos por categoria no dashboard (recharts `PieChart`) com breakdown de valores e percentuais, inspirado na página Relatórios do Visor                                           | ✅     |
+| 9.8  | Dívidas recorrentes — modelo para assinaturas que se renovam automaticamente, com seção separada na listagem e badge "Recorrente"                                                                                  | ✅     |
+| 9.9  | Ação em lote na listagem de dívidas: selecionar múltiplas via checkbox e arquivar/quitar todas de uma vez                                                                                                          | ✅     |
+| 9.10 | Relatório mensal (`/reports`) — donut de categorias + resultado parcial (receita vs gasto) + **diagrama Sankey** de fluxo de gastos (Cartão → Categoria → Subcategoria, recharts Sankey), exportável em CSV        | ✅     |
+| 9.11 | Projeção de quitação — gráfico de barras mostrando parcelas futuras mês a mês com linha pontilhada de saldo projetado, indicando quando cada dívida será quitada (inspirado na Projeção do Visor)                  | ✅     |
+| 9.12 | Valores coloridos na listagem — verde para parcelas pagas, vermelho para vencidas, cinza para futuras + resumo no topo da listagem (total pago / total pendente / total vencido)                                   | ✅     |
 
 ---
 
@@ -211,11 +213,11 @@
 | 6      | Features Avançadas         | 8/8     | ✅ Concluído |
 | 7      | Correções & Polimento      | 10/10   | ✅ Concluído |
 | 8      | Sidebar & Settings         | 10/10   | ✅ Concluído |
-| 9      | Features de Produto        | 0/12    | 🔲 Pendente  |
+| 9      | Features de Produto        | 12/12   | ✅ Concluído |
 | 10     | Segurança & Autenticação   | 0/9     | 🔲 Pendente  |
 | 11     | Testes, Performance & DX   | 0/10    | 🔲 Pendente  |
 
-**Total: 67/98 tarefas concluídas (68%)**
+**Total: 79/98 tarefas concluídas (81%)**
 
 ---
 
