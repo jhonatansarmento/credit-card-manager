@@ -127,50 +127,53 @@
 
 ## Sprint 8 — Features de Produto 🔲
 
-| #    | Tarefa                                                                                                                  | Status |
-| ---- | ----------------------------------------------------------------------------------------------------------------------- | ------ |
-| 8.1  | Página de detalhe da dívida (`/debts/[id]`) — visão completa com timeline de pagamentos                                 | 🔲     |
-| 8.2  | Filtro de período no dashboard — selecionar mês/ano para os gráficos e cards de resumo                                  | 🔲     |
-| 8.3  | Preview de parcelas antes de criar dívida (mostrar datas e valores que serão gerados)                                   | 🔲     |
-| 8.4  | Sistema de categorias/tags nas dívidas (Eletrônicos, Viagem, Alimentação, etc.) — migration, schema Zod, filtro e badge | 🔲     |
-| 8.5  | Criação inline de cartão/nome dentro do formulário de dívida (sem navegar para outra página)                            | 🔲     |
-| 8.6  | Campo `closingDay` no cartão de crédito (dia de fechamento da fatura, além do vencimento)                               | 🔲     |
-| 8.7  | Gráfico de pizza/donut de distribuição de gastos por cartão no dashboard (recharts `PieChart`)                          | 🔲     |
-| 8.8  | Dívidas recorrentes — modelo para assinaturas que se renovam automaticamente                                            | 🔲     |
-| 8.9  | Ação em lote na listagem de dívidas: selecionar múltiplas via checkbox e arquivar/quitar todas de uma vez               | 🔲     |
-| 8.10 | Relatório mensal detalhado (`/reports`) — tabela com total pago, pendente, parcelas vencidas por mês, exportável em CSV | 🔲     |
+| #    | Tarefa                                                                                                                                                                                                             | Status |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
+| 8.1  | Página de detalhe da dívida (`/debts/[id]`) — timeline visual de pagamentos agrupada por mês (estilo Visor Recorrentes), com progresso da parcela (ex: "3/12"), badges de status e link para edição rápida         | 🔲     |
+| 8.2  | Filtro de período no dashboard — navegador "◄ Fevereiro 2026 ►" nos gráficos + cards com **variação % vs mês anterior** (ex: "+32.2%" verde/vermelho, inspirado no Ritmo de Gastos do Visor)                       | 🔲     |
+| 8.3  | Preview de parcelas antes de criar dívida — tabela prévia com datas, valores e número de cada parcela que será gerada, similar à seção "Parcelamentos" da Projeção do Visor                                        | 🔲     |
+| 8.4  | Sistema de categorias nas dívidas com emojis e hierarquia (ex: 🛍️ Compras → 📚 Livraria, 💻 Eletrônicos) — migration, CRUD de categorias, filtro, badge colorido e regras simples de auto-categorização            | 🔲     |
+| 8.5  | Criação inline de cartão/nome dentro do formulário de dívida (dialog/popover sem navegar para outra página)                                                                                                        | 🔲     |
+| 8.6  | Campo `closingDay` no cartão + resumo de fatura por cartão — card mostrando total da fatura do ciclo atual com contagem de parcelas e compras (ex: "R$ 3.302,40 — 17 parcelas · 18 compras", estilo Faturas Visor) | 🔲     |
+| 8.7  | Gráfico donut de distribuição de gastos por categoria no dashboard (recharts `PieChart`) com breakdown de valores e percentuais, inspirado na página Relatórios do Visor                                           | 🔲     |
+| 8.8  | Dívidas recorrentes — modelo para assinaturas que se renovam automaticamente, com seção separada na listagem e badge "Recorrente"                                                                                  | 🔲     |
+| 8.9  | Ação em lote na listagem de dívidas: selecionar múltiplas via checkbox e arquivar/quitar todas de uma vez                                                                                                          | 🔲     |
+| 8.10 | Relatório mensal (`/reports`) — donut de categorias + resultado parcial (receita vs gasto) + **diagrama Sankey** de fluxo de gastos (Cartão → Categoria → Subcategoria, recharts Sankey), exportável em CSV        | 🔲     |
+| 8.11 | Projeção de quitação — gráfico de barras mostrando parcelas futuras mês a mês com linha pontilhada de saldo projetado, indicando quando cada dívida será quitada (inspirado na Projeção do Visor)                  | 🔲     |
+| 8.12 | Valores coloridos na listagem — verde para parcelas pagas, vermelho para vencidas, cinza para futuras + resumo no topo da listagem (total pago / total pendente / total vencido)                                   | 🔲     |
 
 ---
 
 ## Sprint 9 — Segurança & Autenticação 🔲
 
-| #   | Tarefa                                                                                                                 | Status |
-| --- | ---------------------------------------------------------------------------------------------------------------------- | ------ |
-| 9.1 | Fluxo de "esqueci minha senha" (reset por email)                                                                       | 🔲     |
-| 9.2 | Verificação de email obrigatória (o campo `emailVerified` existe mas não é usado)                                      | 🔲     |
-| 9.3 | Página de perfil do usuário (`/settings`) — editar nome, email e trocar senha (integração com better-auth)             | 🔲     |
-| 9.4 | Deleção de conta pelo próprio usuário                                                                                  | 🔲     |
-| 9.5 | Gerenciamento de sessões — ver e revogar sessões ativas                                                                | 🔲     |
-| 9.6 | Validação de variáveis de ambiente com Zod no startup (t3-env)                                                         | 🔲     |
-| 9.7 | Rate limiter com Redis/Vercel KV (substituir in-memory que não funciona em serverless)                                 | 🔲     |
-| 9.8 | Notificação in-app (banner/toast) ao fazer login se houver parcelas vencidas, com link direto para a seção de vencidas | 🔲     |
+| #   | Tarefa                                                                                                                                                              | Status |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 9.1 | Fluxo de "esqueci minha senha" (reset por email via better-auth `forgetPassword` plugin)                                                                            | 🔲     |
+| 9.2 | Verificação de email obrigatória (o campo `emailVerified` existe mas não é usado)                                                                                   | 🔲     |
+| 9.3 | Página de perfil do usuário (`/settings`) — editar nome, email, avatar e trocar senha (integração com better-auth)                                                  | 🔲     |
+| 9.4 | Deleção de conta pelo próprio usuário com confirmação por senha e exclusão em cascata de todos os dados                                                             | 🔲     |
+| 9.5 | Gerenciamento de sessões — ver e revogar sessões ativas (listar dispositivos/IPs com botão "Encerrar sessão")                                                       | 🔲     |
+| 9.6 | Validação de variáveis de ambiente com Zod no startup (t3-env)                                                                                                      | 🔲     |
+| 9.7 | Rate limiter com Redis/Vercel KV (substituir in-memory que não funciona em serverless)                                                                              | 🔲     |
+| 9.8 | Notificação in-app (banner/toast) ao fazer login se houver parcelas vencidas, com link direto para a seção de vencidas                                              | 🔲     |
+| 9.9 | Limites de gasto por cartão e/ou categoria — campo `spendingLimit` no cartão/categoria com alerta visual quando atingir 80%/100% (barra de progresso, estilo Visor) | 🔲     |
 
 ---
 
 ## Sprint 10 — Testes, Performance & DX 🔲
 
-| #     | Tarefa                                                                                                                | Status |
-| ----- | --------------------------------------------------------------------------------------------------------------------- | ------ |
-| 10.1  | Configurar Vitest + React Testing Library (`vitest.config.ts`, scripts `test` e `test:watch` no `package.json`)       | 🔲     |
-| 10.2  | Testes unitários dos services: `credit-card`, `name`, `debt` (`buildInstallments`, `duplicateDebt`, `exportDebtsCSV`) | 🔲     |
-| 10.3  | Testes dos schemas Zod e utilitários (`formatCurrency`, `sanitizeObject`, `rateLimit`, `parseBody`)                   | 🔲     |
-| 10.4  | Configurar Playwright para E2E — fluxo de login, criação de cartão, criação de dívida e toggle de parcela             | 🔲     |
-| 10.5  | CI/CD pipeline no GitHub Actions: lint, type-check, testes unitários, build em cada PR                                | 🔲     |
-| 10.6  | Seed script do Prisma para dados de desenvolvimento (`prisma/seed.ts`)                                                | 🔲     |
-| 10.7  | Extrair tipos compartilhados (`DebtWithRelations`, `CreditCardWithCounts`) para `src/lib/types.ts`                    | 🔲     |
-| 10.8  | Lazy load do `recharts` via `next/dynamic` com `ssr: false` + debounce no campo de busca do `DebtFilters` (300ms)     | 🔲     |
-| 10.9  | Responsividade aprimorada: converter tabelas de cartões e nomes para layout de cards empilhados em telas `< md`       | 🔲     |
-| 10.10 | Auditoria de acessibilidade: `aria-label`, `focus-visible`, skip-to-content link, `aria-live` nos feedbacks dinâmicos | 🔲     |
+| #     | Tarefa                                                                                                                                           | Status |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
+| 10.1  | Configurar Vitest + React Testing Library (`vitest.config.ts`, scripts `test` e `test:watch` no `package.json`)                                  | 🔲     |
+| 10.2  | Testes unitários dos services: `credit-card`, `name`, `debt` (`buildInstallments`, `duplicateDebt`, `exportDebtsCSV`)                            | 🔲     |
+| 10.3  | Testes dos schemas Zod e utilitários (`formatCurrency`, `sanitizeObject`, `rateLimit`, `parseBody`)                                              | 🔲     |
+| 10.4  | Configurar Playwright para E2E — fluxo de login, criação de cartão, criação de dívida e toggle de parcela                                        | 🔲     |
+| 10.5  | CI/CD pipeline no GitHub Actions: lint, type-check, testes unitários, build em cada PR                                                           | 🔲     |
+| 10.6  | Seed script do Prisma para dados de desenvolvimento (`prisma/seed.ts`) com cenários variados (dívidas quitadas, parciais, vencidas, recorrentes) | 🔲     |
+| 10.7  | Extrair tipos compartilhados (`DebtWithRelations`, `CreditCardWithCounts`, `CategoryWithEmoji`) para `src/lib/types.ts`                          | 🔲     |
+| 10.8  | Lazy load do `recharts` e `Sankey` via `next/dynamic` com `ssr: false` + debounce no campo de busca do `DebtFilters` (300ms)                     | 🔲     |
+| 10.9  | Responsividade aprimorada: converter tabelas de cartões e nomes para layout de cards empilhados em telas `< md` + sidebar collapsible em desktop | 🔲     |
+| 10.10 | Auditoria de acessibilidade: `aria-label`, `focus-visible`, skip-to-content link, `aria-live` nos feedbacks dinâmicos                            | 🔲     |
 
 ---
 
@@ -185,11 +188,11 @@
 | 5      | Segurança & Infraestrutura | 7/7     | ✅ Concluído |
 | 6      | Features Avançadas         | 8/8     | ✅ Concluído |
 | 7      | Correções & Polimento      | 10/10   | ✅ Concluído |
-| 8      | Features de Produto        | 0/10    | 🔲 Pendente  |
-| 9      | Segurança & Autenticação   | 0/8     | 🔲 Pendente  |
+| 8      | Features de Produto        | 0/12    | 🔲 Pendente  |
+| 9      | Segurança & Autenticação   | 0/9     | 🔲 Pendente  |
 | 10     | Testes, Performance & DX   | 0/10    | 🔲 Pendente  |
 
-**Total: 57/85 tarefas concluídas (67%)**
+**Total: 57/88 tarefas concluídas (65%)**
 
 ---
 
