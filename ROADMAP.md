@@ -125,69 +125,69 @@
 
 ---
 
-## Sprint 8 — Testes & Qualidade de Código 🔲
+## Sprint 8 — Features de Produto 🔲
 
-| #    | Tarefa                                                                                                                          | Status |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 8.1  | Configurar Vitest + React Testing Library (`vitest.config.ts`, scripts `test` e `test:watch` no `package.json`)                 | 🔲     |
-| 8.2  | Testes unitários dos services: `credit-card.service.ts`, `name.service.ts` (mock do Prisma com `vitest-mock-extended`)          | 🔲     |
-| 8.3  | Testes unitários do `debt.service.ts` — `buildInstallments`, `createDebt`, `duplicateDebt`, `exportDebtsCSV`                    | 🔲     |
-| 8.4  | Testes unitários do `dashboard.service.ts` — `getDashboardSummary`, `getMonthlyEvolution`, `getOverdueInstallments`             | 🔲     |
-| 8.5  | Testes dos utilitários: `formatCurrency`, `sanitizeObject`, `rateLimit`, `parseBody` (route-helpers)                            | 🔲     |
-| 8.6  | Testes dos schemas Zod (`credit-card.ts`, `debt.ts`, `person-company.ts`) — validações de borda (max length, valores negativos) | 🔲     |
-| 8.7  | Testes de componente: `MonthlyEvolutionChart`, `DebtFilters`, `InstallmentCollapse`, `ToggleInstallmentButton`                  | 🔲     |
-| 8.8  | Configurar Playwright para E2E — fluxo de login, criação de cartão, criação de dívida e toggle de parcela                       | 🔲     |
-| 8.9  | Adicionar CI com GitHub Actions: lint, type-check, testes unitários e build em cada PR                                          | 🔲     |
-| 8.10 | Extrair tipos compartilhados (`DebtWithRelations`, `CreditCardWithCounts`) para `src/lib/types.ts`                              | 🔲     |
-
----
-
-## Sprint 9 — Performance & Acessibilidade 🔲
-
-| #   | Tarefa                                                                                                                           | Status |
-| --- | -------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 9.1 | Implementar `unstable_cache` do Next.js nos services do dashboard com revalidação por tag (`revalidateTag` ao mutar dados)       | 🔲     |
-| 9.2 | Lazy load do `recharts` no `MonthlyEvolutionChart` via `next/dynamic` com `ssr: false` e skeleton de fallback                    | 🔲     |
-| 9.3 | Adicionar `loading.tsx` com skeletons nas rotas faltantes (`/names`, `/debts/[id]/edit`, `/cards/[id]/edit`)                     | 🔲     |
-| 9.4 | Otimizar queries N+1 no `getSpendingByCard` e `getSpendingByPerson` — usar `groupBy` do Prisma ou raw SQL com `SUM/COUNT`        | 🔲     |
-| 9.5 | Auditoria de acessibilidade: adicionar `aria-label` nos botões de ícone, `role` nas tabelas, `aria-live` nos feedbacks dinâmicos | 🔲     |
-| 9.6 | Navegação por teclado: garantir `focus-visible` em todos os interativos, trap de foco nos modais/dropdowns, skip-to-content link | 🔲     |
-| 9.7 | Adicionar `<meta>` tags de SEO e Open Graph no layout root (`title`, `description`, `og:image`)                                  | 🔲     |
-| 9.8 | Responsividade aprimorada: converter tabelas de cartões e nomes para layout de cards empilhados em telas `< md`                  | 🔲     |
-| 9.9 | Implementar debounce no campo de busca do `DebtFilters` (300ms) para evitar requests excessivos durante digitação                | 🔲     |
+| #    | Tarefa                                                                                                                  | Status |
+| ---- | ----------------------------------------------------------------------------------------------------------------------- | ------ |
+| 8.1  | Página de detalhe da dívida (`/debts/[id]`) — visão completa com timeline de pagamentos                                 | 🔲     |
+| 8.2  | Filtro de período no dashboard — selecionar mês/ano para os gráficos e cards de resumo                                  | 🔲     |
+| 8.3  | Preview de parcelas antes de criar dívida (mostrar datas e valores que serão gerados)                                   | 🔲     |
+| 8.4  | Sistema de categorias/tags nas dívidas (Eletrônicos, Viagem, Alimentação, etc.) — migration, schema Zod, filtro e badge | 🔲     |
+| 8.5  | Criação inline de cartão/nome dentro do formulário de dívida (sem navegar para outra página)                            | 🔲     |
+| 8.6  | Campo `closingDay` no cartão de crédito (dia de fechamento da fatura, além do vencimento)                               | 🔲     |
+| 8.7  | Gráfico de pizza/donut de distribuição de gastos por cartão no dashboard (recharts `PieChart`)                          | 🔲     |
+| 8.8  | Dívidas recorrentes — modelo para assinaturas que se renovam automaticamente                                            | 🔲     |
+| 8.9  | Ação em lote na listagem de dívidas: selecionar múltiplas via checkbox e arquivar/quitar todas de uma vez               | 🔲     |
+| 8.10 | Relatório mensal detalhado (`/reports`) — tabela com total pago, pendente, parcelas vencidas por mês, exportável em CSV | 🔲     |
 
 ---
 
-## Sprint 10 — Relatórios Avançados & Experiência do Usuário 🔲
+## Sprint 9 — Segurança & Autenticação 🔲
 
-| #    | Tarefa                                                                                                                                           | Status |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
-| 10.1 | Gráfico de pizza/donut de distribuição de gastos por cartão no dashboard (recharts `PieChart`)                                                   | 🔲     |
-| 10.2 | Filtro de período (intervalo de datas) no dashboard para limitar os dados exibidos nos cards de resumo e gráficos                                | 🔲     |
-| 10.3 | Página de perfil do usuário (`/settings`) — editar nome, email e trocar senha (integração com better-auth)                                       | 🔲     |
-| 10.4 | Confirmação com `AlertDialog` antes de ações destrutivas em cartões e nomes (substituir `DeleteButton` simples)                                  | 🔲     |
-| 10.5 | Adicionar campo opcional `category` (tag/etiqueta) ao model `Debt` — migration, schema Zod, filtro e badge colorido na listagem                  | 🔲     |
-| 10.6 | Relatório mensal detalhado (`/reports`) — tabela com total pago, total pendente, parcelas vencidas por mês, exportável em CSV                    | 🔲     |
-| 10.7 | Notificação in-app (banner/toast) ao fazer login se houver parcelas vencidas, com link direto para a seção de vencidas                           | 🔲     |
-| 10.8 | Ação em lote na listagem de dívidas: selecionar múltiplas dívidas via checkbox e arquivar/quitar todas de uma vez                                | 🔲     |
-| 10.9 | Adicionar bandeira do cartão (`brand`: Visa, Mastercard, Elo, etc.) como campo selecionável no cadastro de cartão — migration e `CardBrandBadge` | 🔲     |
+| #   | Tarefa                                                                                                                 | Status |
+| --- | ---------------------------------------------------------------------------------------------------------------------- | ------ |
+| 9.1 | Fluxo de "esqueci minha senha" (reset por email)                                                                       | 🔲     |
+| 9.2 | Verificação de email obrigatória (o campo `emailVerified` existe mas não é usado)                                      | 🔲     |
+| 9.3 | Página de perfil do usuário (`/settings`) — editar nome, email e trocar senha (integração com better-auth)             | 🔲     |
+| 9.4 | Deleção de conta pelo próprio usuário                                                                                  | 🔲     |
+| 9.5 | Gerenciamento de sessões — ver e revogar sessões ativas                                                                | 🔲     |
+| 9.6 | Validação de variáveis de ambiente com Zod no startup (t3-env)                                                         | 🔲     |
+| 9.7 | Rate limiter com Redis/Vercel KV (substituir in-memory que não funciona em serverless)                                 | 🔲     |
+| 9.8 | Notificação in-app (banner/toast) ao fazer login se houver parcelas vencidas, com link direto para a seção de vencidas | 🔲     |
+
+---
+
+## Sprint 10 — Testes, Performance & DX 🔲
+
+| #     | Tarefa                                                                                                                | Status |
+| ----- | --------------------------------------------------------------------------------------------------------------------- | ------ |
+| 10.1  | Configurar Vitest + React Testing Library (`vitest.config.ts`, scripts `test` e `test:watch` no `package.json`)       | 🔲     |
+| 10.2  | Testes unitários dos services: `credit-card`, `name`, `debt` (`buildInstallments`, `duplicateDebt`, `exportDebtsCSV`) | 🔲     |
+| 10.3  | Testes dos schemas Zod e utilitários (`formatCurrency`, `sanitizeObject`, `rateLimit`, `parseBody`)                   | 🔲     |
+| 10.4  | Configurar Playwright para E2E — fluxo de login, criação de cartão, criação de dívida e toggle de parcela             | 🔲     |
+| 10.5  | CI/CD pipeline no GitHub Actions: lint, type-check, testes unitários, build em cada PR                                | 🔲     |
+| 10.6  | Seed script do Prisma para dados de desenvolvimento (`prisma/seed.ts`)                                                | 🔲     |
+| 10.7  | Extrair tipos compartilhados (`DebtWithRelations`, `CreditCardWithCounts`) para `src/lib/types.ts`                    | 🔲     |
+| 10.8  | Lazy load do `recharts` via `next/dynamic` com `ssr: false` + debounce no campo de busca do `DebtFilters` (300ms)     | 🔲     |
+| 10.9  | Responsividade aprimorada: converter tabelas de cartões e nomes para layout de cards empilhados em telas `< md`       | 🔲     |
+| 10.10 | Auditoria de acessibilidade: `aria-label`, `focus-visible`, skip-to-content link, `aria-live` nos feedbacks dinâmicos | 🔲     |
 
 ---
 
 ## Resumo de Progresso
 
-| Sprint | Descrição                          | Tarefas | Status       |
-| ------ | ---------------------------------- | ------- | ------------ |
-| 1      | Correções Críticas                 | 9/9     | ✅ Concluído |
-| 2      | Arquitetura & Qualidade            | 9/9     | ✅ Concluído |
-| 3      | UX & Feedback Visual               | 8/8     | ✅ Concluído |
-| 4      | Dashboard & Analytics              | 6/6     | ✅ Concluído |
-| 5      | Segurança & Infraestrutura         | 7/7     | ✅ Concluído |
-| 6      | Features Avançadas                 | 8/8     | ✅ Concluído |
-| 7      | Correções & Polimento              | 10/10   | ✅ Concluído |
-| 8      | Testes & Qualidade de Código       | 0/10    | 🔲 Pendente  |
-| 9      | Performance & Acessibilidade       | 0/9     | 🔲 Pendente  |
-| 10     | Relatórios Avançados & Experiência | 0/9     | 🔲 Pendente  |
+| Sprint | Descrição                  | Tarefas | Status       |
+| ------ | -------------------------- | ------- | ------------ |
+| 1      | Correções Críticas         | 9/9     | ✅ Concluído |
+| 2      | Arquitetura & Qualidade    | 9/9     | ✅ Concluído |
+| 3      | UX & Feedback Visual       | 8/8     | ✅ Concluído |
+| 4      | Dashboard & Analytics      | 6/6     | ✅ Concluído |
+| 5      | Segurança & Infraestrutura | 7/7     | ✅ Concluído |
+| 6      | Features Avançadas         | 8/8     | ✅ Concluído |
+| 7      | Correções & Polimento      | 10/10   | ✅ Concluído |
+| 8      | Features de Produto        | 0/10    | 🔲 Pendente  |
+| 9      | Segurança & Autenticação   | 0/8     | 🔲 Pendente  |
+| 10     | Testes, Performance & DX   | 0/10    | 🔲 Pendente  |
 
 **Total: 57/85 tarefas concluídas (67%)**
 
