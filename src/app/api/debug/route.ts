@@ -26,6 +26,9 @@ export async function GET() {
       : '❌ NÃO definido',
     BETTER_AUTH_URL_VALUE: process.env.BETTER_AUTH_URL ?? 'undefined',
     NODE_ENV: process.env.NODE_ENV,
+    DATABASE_URL_FORMAT: process.env.DATABASE_URL
+      ? process.env.DATABASE_URL.replace(/\/\/([^:]+):[^@]+@/, '//$1:***@')
+      : 'undefined',
   };
 
   // 2. Testar conexão com o banco de dados
