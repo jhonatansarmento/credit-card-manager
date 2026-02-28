@@ -75,7 +75,7 @@
 
 ## Sprint 5 — Segurança & Infraestrutura ✅
 
-> **Commit:** _(pendente)_ — _feat: sprint 5 - security and infrastructure hardening_
+> **Commit:** `e67e434` — _feat: sprint 5 - security and infrastructure hardening_
 
 | #   | Tarefa                                                                                           | Status |
 | --- | ------------------------------------------------------------------------------------------------ | ------ |
