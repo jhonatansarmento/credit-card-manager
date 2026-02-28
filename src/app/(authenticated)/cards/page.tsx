@@ -1,5 +1,6 @@
 import CardBrandBadge from '@/components/card-brand-badge';
 import DeleteButton from '@/components/delete-button';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -16,6 +17,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { getAuthSession } from '@/lib/auth-session';
+import { formatCurrency } from '@/lib/format';
 import { listCreditCards } from '@/services/credit-card.service';
 import { CreditCard, Pencil, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -69,32 +71,61 @@ export default async function CreditCardsPage() {
                 <TableRow>
                   <TableHead>Nome do Cartão</TableHead>
                   <TableHead>Dia de Vencimento</TableHead>
+                  <TableHead>Dívidas</TableHead>
+                  <TableHead>Pendente</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {creditCards.map((card) => (
-                  <TableRow key={card.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-3">
-                        <CardBrandBadge name={card.name} />
-                        <span>{card.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{card.dueDay}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="icon" asChild>
-                          <Link href={`/cards/${card.id}/edit`}>
-                            <Pencil className="h-4 w-4" />
-                            <span className="sr-only">Editar</span>
-                          </Link>
-                        </Button>
-                        <DeleteButton endpoint={`/api/cards/${card.id}`} />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {creditCards.map((card) => {
+                  const pendingAmount = card.debts.reduce(
+                    (sum, debt) =>
+                      sum +
+                      debt.installments.reduce(
+                        (s, inst) => s + Number(inst.amount),
+                        0,
+                      ),
+                    0,
+                  );
+
+                  return (
+                    <TableRow key={card.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-3">
+                          <CardBrandBadge name={card.name} />
+                          <span>{card.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{card.dueDay}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">
+                          {card._count.debts}{' '}
+                          {card._count.debts === 1 ? 'dívida' : 'dívidas'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {pendingAmount > 0 ? (
+                          <span className="text-destructive font-medium">
+                            {formatCurrency(pendingAmount)}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" size="icon" asChild>
+                            <Link href={`/cards/${card.id}/edit`}>
+                              <Pencil className="h-4 w-4" />
+                              <span className="sr-only">Editar</span>
+                            </Link>
+                          </Button>
+                          <DeleteButton endpoint={`/api/cards/${card.id}`} />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>

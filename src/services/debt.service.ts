@@ -47,12 +47,20 @@ async function buildInstallments(
     throw new Error('Cartão de crédito não encontrado.');
   }
 
-  const installmentValue = Number.parseFloat(
+  const baseInstallmentValue = Number.parseFloat(
     (totalAmount / installmentsQuantity).toFixed(2),
   );
 
+  // 7.1 — Last installment absorbs rounding remainder
+  const sumOfBase = Number.parseFloat(
+    (baseInstallmentValue * (installmentsQuantity - 1)).toFixed(2),
+  );
+  const lastInstallmentValue = Number.parseFloat(
+    (totalAmount - sumOfBase).toFixed(2),
+  );
+
   return {
-    installmentValue,
+    installmentValue: baseInstallmentValue,
     installmentsData: Array.from({ length: installmentsQuantity }, (_, i) => {
       const startYear = startDate.getUTCFullYear();
       const startMonth = startDate.getUTCMonth();
@@ -66,10 +74,12 @@ async function buildInstallments(
       ).getUTCDate();
       const day = Math.min(creditCard.dueDay, daysInMonth);
 
+      const isLast = i === installmentsQuantity - 1;
+
       return {
         installmentNumber: i + 1,
         dueDate: new Date(Date.UTC(targetYear, targetMonth, day)),
-        amount: installmentValue,
+        amount: isLast ? lastInstallmentValue : baseInstallmentValue,
         isPaid: false,
       };
     }),

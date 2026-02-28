@@ -106,6 +106,25 @@
 
 ---
 
+## Sprint 7 — Correções & Polimento ✅
+
+> **Commit:** `pendente` — _feat: sprint 7 - corrections and polish_
+
+| #    | Tarefa                                                                                             | Status |
+| ---- | -------------------------------------------------------------------------------------------------- | ------ |
+| 7.1  | Corrigir arredondamento de parcelas (última parcela absorve centavos restantes)                    | ✅     |
+| 7.2  | Adicionar índices no banco (Debt: userId+isArchived, cardId, personCompanyId; Installment: isPaid) | ✅     |
+| 7.3  | Seção de parcelas vencidas no dashboard (overdue installments)                                     | ✅     |
+| 7.4  | Toggle de tema claro/escuro com next-themes (ThemeProvider + ThemeToggle)                          | ✅     |
+| 7.5  | Highlight de link ativo na navbar desktop (NavLinks client component)                              | ✅     |
+| 7.6  | Colapsar parcelas na listagem de dívidas (mostrar 4, expandir sob demanda)                         | ✅     |
+| 7.7  | Refatorar ações de dívida para DropdownMenu único (editar, duplicar, quitar, arquivar, excluir)    | ✅     |
+| 7.8  | Hardening dos schemas Zod (max lengths, max parcelas 120, regex de data, max valor)                | ✅     |
+| 7.9  | Migrar dashboard para agregações SQL via Prisma (remover loops in-memory)                          | ✅     |
+| 7.10 | Exibir contagem de dívidas e valor pendente nas listagens de cartões e nomes                       | ✅     |
+
+---
+
 ## Resumo de Progresso
 
 | Sprint | Descrição                  | Tarefas | Status       |
@@ -116,8 +135,9 @@
 | 4      | Dashboard & Analytics      | 6/6     | ✅ Concluído |
 | 5      | Segurança & Infraestrutura | 7/7     | ✅ Concluído |
 | 6      | Features Avançadas         | 8/8     | ✅ Concluído |
+| 7      | Correções & Polimento      | 10/10   | ✅ Concluído |
 
-**Total: 47/47 tarefas concluídas (100%)**
+**Total: 57/57 tarefas concluídas (100%)**
 
 ---
 

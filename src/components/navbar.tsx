@@ -1,9 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { getOptionalSession } from '@/lib/auth-session';
-import { CreditCard, Home, Users, Wallet } from 'lucide-react';
+import { CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import MobileMenu from './mobile-menu';
+import { NavLinks } from './nav-links';
 import { SignOutButton } from './sign-out-button';
+import { ThemeToggle } from './theme-toggle';
 
 export default async function Navbar() {
   const session = await getOptionalSession();
@@ -27,34 +29,12 @@ export default async function Navbar() {
 
       {/* Desktop nav */}
       <nav className="hidden md:flex items-center gap-4 ml-6">
-        <Button variant="ghost" asChild>
-          <Link href="/">
-            <Home className="h-4 w-4 mr-2" />
-            Início
-          </Link>
-        </Button>
-        <Button variant="ghost" asChild>
-          <Link href="/cards">
-            <CreditCard className="h-4 w-4 mr-2" />
-            Cartões
-          </Link>
-        </Button>
-        <Button variant="ghost" asChild>
-          <Link href="/names">
-            <Users className="h-4 w-4 mr-2" />
-            Nomes
-          </Link>
-        </Button>
-        <Button variant="ghost" asChild>
-          <Link href="/debts">
-            <Wallet className="h-4 w-4 mr-2" />
-            Dívidas
-          </Link>
-        </Button>
+        <NavLinks />
       </nav>
 
       {/* Right side — always visible */}
       <div className="ml-auto flex items-center gap-2">
+        <ThemeToggle />
         {session ? (
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground hidden md:inline">

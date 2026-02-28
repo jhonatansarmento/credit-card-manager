@@ -1,4 +1,5 @@
 import { Toaster } from '@/components/ui/sonner';
+import { ThemeProvider } from '@/components/theme-provider';
 import type { Metadata, Viewport } from 'next';
 import type React from 'react';
 import './globals.css';
@@ -32,9 +33,16 @@ export default function RootLayout({
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192x192.svg" />
       </head>
-      <body className="antialiased dark">
-        {children}
-        <Toaster />
+      <body className="antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster />
+        </ThemeProvider>
         <script
           dangerouslySetInnerHTML={{
             __html: `

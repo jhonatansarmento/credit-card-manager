@@ -42,52 +42,50 @@ export interface UpcomingInstallment {
 export async function getDashboardSummary(
   userId: string,
 ): Promise<DashboardSummary> {
-  const debts = await prisma.debt.findMany({
-    where: { userId },
-    include: {
-      installments: {
-        select: { isPaid: true, amount: true, dueDate: true },
-      },
+  // Count active debts (debts with at least one unpaid installment)
+  const activeDebts = await prisma.debt.count({
+    where: {
+      userId,
+      isArchived: false,
+      installments: { some: { isPaid: false } },
     },
   });
 
+  // Aggregate paid vs pending amounts
+  const [paidAgg, pendingAgg] = await Promise.all([
+    prisma.installment.aggregate({
+      where: { debt: { userId }, isPaid: true },
+      _sum: { amount: true },
+      _count: true,
+    }),
+    prisma.installment.aggregate({
+      where: { debt: { userId }, isPaid: false },
+      _sum: { amount: true },
+      _count: true,
+    }),
+  ]);
+
+  const totalPaid = Number(paidAgg._sum.amount ?? 0);
+  const totalPending = Number(pendingAgg._sum.amount ?? 0);
+  const paidCount = paidAgg._count;
+  const pendingCount = pendingAgg._count;
+  const totalInstallments = paidCount + pendingCount;
+
+  // Installments due this month
   const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-  let totalPending = 0;
-  let totalPaid = 0;
-  let totalInstallments = 0;
-  let paidInstallments = 0;
-  let installmentsDueThisMonth = 0;
-  let activeDebts = 0;
-
-  for (const debt of debts) {
-    const hasPending = debt.installments.some((i) => !i.isPaid);
-    if (hasPending) activeDebts++;
-
-    for (const inst of debt.installments) {
-      totalInstallments++;
-      const amount = Number(inst.amount);
-
-      if (inst.isPaid) {
-        totalPaid += amount;
-        paidInstallments++;
-      } else {
-        totalPending += amount;
-
-        if (
-          inst.dueDate.getMonth() === currentMonth &&
-          inst.dueDate.getFullYear() === currentYear
-        ) {
-          installmentsDueThisMonth++;
-        }
-      }
-    }
-  }
+  const installmentsDueThisMonth = await prisma.installment.count({
+    where: {
+      debt: { userId },
+      isPaid: false,
+      dueDate: { gte: startOfMonth, lt: startOfNextMonth },
+    },
+  });
 
   const overallPayoffPercent =
-    totalInstallments > 0 ? (paidInstallments / totalInstallments) * 100 : 0;
+    totalInstallments > 0 ? (paidCount / totalInstallments) * 100 : 0;
 
   return {
     activeDebts,
@@ -101,40 +99,49 @@ export async function getDashboardSummary(
 export async function getSpendingByCard(
   userId: string,
 ): Promise<SpendingByCard[]> {
+  // Get all debts grouped by card with installment aggregation
   const debts = await prisma.debt.findMany({
     where: { userId },
-    include: {
+    select: {
+      cardId: true,
       creditCard: { select: { name: true } },
-      installments: { select: { isPaid: true, amount: true } },
     },
   });
 
-  const cardMap = new Map<
-    string,
-    { totalAmount: number; pendingAmount: number; debtCount: number }
-  >();
-
-  for (const debt of debts) {
-    const cardName = debt.creditCard.name;
-    const existing = cardMap.get(cardName) || {
-      totalAmount: 0,
-      pendingAmount: 0,
-      debtCount: 0,
-    };
-
-    existing.debtCount++;
-    for (const inst of debt.installments) {
-      const amount = Number(inst.amount);
-      existing.totalAmount += amount;
-      if (!inst.isPaid) existing.pendingAmount += amount;
-    }
-
-    cardMap.set(cardName, existing);
+  // Get unique card mappings
+  const cardMap = new Map<string, string>();
+  for (const d of debts) {
+    cardMap.set(d.cardId, d.creditCard.name);
   }
 
-  return Array.from(cardMap.entries())
-    .map(([cardName, data]) => ({ cardName, ...data }))
-    .sort((a, b) => b.totalAmount - a.totalAmount);
+  // Aggregate installment totals grouped by card
+  const cardIds = Array.from(cardMap.keys());
+  if (cardIds.length === 0) return [];
+
+  const results = await Promise.all(
+    cardIds.map(async (cardId) => {
+      const [totalAgg, pendingAgg, debtCount] = await Promise.all([
+        prisma.installment.aggregate({
+          where: { debt: { userId, cardId } },
+          _sum: { amount: true },
+        }),
+        prisma.installment.aggregate({
+          where: { debt: { userId, cardId }, isPaid: false },
+          _sum: { amount: true },
+        }),
+        prisma.debt.count({ where: { userId, cardId } }),
+      ]);
+
+      return {
+        cardName: cardMap.get(cardId)!,
+        totalAmount: Number(totalAgg._sum.amount ?? 0),
+        pendingAmount: Number(pendingAgg._sum.amount ?? 0),
+        debtCount,
+      };
+    }),
+  );
+
+  return results.sort((a, b) => b.totalAmount - a.totalAmount);
 }
 
 export async function getSpendingByPerson(
@@ -142,38 +149,44 @@ export async function getSpendingByPerson(
 ): Promise<SpendingByPerson[]> {
   const debts = await prisma.debt.findMany({
     where: { userId },
-    include: {
+    select: {
+      personCompanyId: true,
       personCompany: { select: { name: true } },
-      installments: { select: { isPaid: true, amount: true } },
     },
   });
 
-  const personMap = new Map<
-    string,
-    { totalAmount: number; pendingAmount: number; debtCount: number }
-  >();
-
-  for (const debt of debts) {
-    const personName = debt.personCompany.name;
-    const existing = personMap.get(personName) || {
-      totalAmount: 0,
-      pendingAmount: 0,
-      debtCount: 0,
-    };
-
-    existing.debtCount++;
-    for (const inst of debt.installments) {
-      const amount = Number(inst.amount);
-      existing.totalAmount += amount;
-      if (!inst.isPaid) existing.pendingAmount += amount;
-    }
-
-    personMap.set(personName, existing);
+  const personMap = new Map<string, string>();
+  for (const d of debts) {
+    personMap.set(d.personCompanyId, d.personCompany.name);
   }
 
-  return Array.from(personMap.entries())
-    .map(([personName, data]) => ({ personName, ...data }))
-    .sort((a, b) => b.totalAmount - a.totalAmount);
+  const personIds = Array.from(personMap.keys());
+  if (personIds.length === 0) return [];
+
+  const results = await Promise.all(
+    personIds.map(async (personCompanyId) => {
+      const [totalAgg, pendingAgg, debtCount] = await Promise.all([
+        prisma.installment.aggregate({
+          where: { debt: { userId, personCompanyId } },
+          _sum: { amount: true },
+        }),
+        prisma.installment.aggregate({
+          where: { debt: { userId, personCompanyId }, isPaid: false },
+          _sum: { amount: true },
+        }),
+        prisma.debt.count({ where: { userId, personCompanyId } }),
+      ]);
+
+      return {
+        personName: personMap.get(personCompanyId)!,
+        totalAmount: Number(totalAgg._sum.amount ?? 0),
+        pendingAmount: Number(pendingAgg._sum.amount ?? 0),
+        debtCount,
+      };
+    }),
+  );
+
+  return results.sort((a, b) => b.totalAmount - a.totalAmount);
 }
 
 export async function getMonthlyEvolution(
@@ -220,6 +233,45 @@ export async function getUpcomingInstallments(
       debt: { userId },
       isPaid: false,
       dueDate: { gte: now },
+    },
+    include: {
+      debt: {
+        select: {
+          description: true,
+          installmentsQuantity: true,
+          creditCard: { select: { name: true } },
+          personCompany: { select: { name: true } },
+        },
+      },
+    },
+    orderBy: { dueDate: 'asc' },
+    take: limit,
+  });
+
+  return installments.map((inst) => ({
+    id: inst.id,
+    debtDescription: inst.debt.description,
+    cardName: inst.debt.creditCard.name,
+    personName: inst.debt.personCompany.name,
+    installmentNumber: inst.installmentNumber,
+    totalInstallments: inst.debt.installmentsQuantity,
+    dueDate: inst.dueDate,
+    amount: Number(inst.amount),
+  }));
+}
+
+export async function getOverdueInstallments(
+  userId: string,
+  limit = 20,
+): Promise<UpcomingInstallment[]> {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  const installments = await prisma.installment.findMany({
+    where: {
+      debt: { userId, isArchived: false },
+      isPaid: false,
+      dueDate: { lt: now },
     },
     include: {
       debt: {

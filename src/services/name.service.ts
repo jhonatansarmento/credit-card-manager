@@ -4,6 +4,17 @@ export async function listNames(userId: string) {
   return prisma.personCompany.findMany({
     where: { userId },
     orderBy: { name: 'asc' },
+    include: {
+      _count: { select: { debts: true } },
+      debts: {
+        select: {
+          installments: {
+            where: { isPaid: false },
+            select: { amount: true },
+          },
+        },
+      },
+    },
   });
 }
 

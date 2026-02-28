@@ -1,7 +1,7 @@
 import CardBrandBadge from '@/components/card-brand-badge';
-import DebtActions from '@/components/debt-actions';
+import DebtActionsMenu from '@/components/debt-actions-menu';
 import DebtFilters from '@/components/debt-filters';
-import DeleteButton from '@/components/delete-button';
+import { InstallmentCollapse } from '@/components/installment-collapse';
 import Pagination from '@/components/pagination';
 import ToggleInstallmentButton from '@/components/toggle-installment-button';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +21,7 @@ import { listDebts } from '@/services/debt.service';
 import { listNames } from '@/services/name.service';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Archive, Pencil, PlusCircle, SearchX, Wallet } from 'lucide-react';
+import { Archive, PlusCircle, SearchX, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
@@ -222,18 +222,11 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                       </span>
                     </div>
                     <Badge variant="outline">{debt.personCompany.name}</Badge>
-                    <DebtActions
+                    <DebtActionsMenu
                       debtId={debt.id}
                       isArchived={debt.isArchived}
                       allPaid={allPaid}
                     />
-                    <Button variant="outline" size="icon" asChild>
-                      <Link href={`/debts/${debt.id}/edit`}>
-                        <Pencil className="h-4 w-4" />
-                        <span className="sr-only">Editar Dívida</span>
-                      </Link>
-                    </Button>
-                    <DeleteButton endpoint={`/api/debts/${debt.id}`} />
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -252,9 +245,9 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                   </div>
 
                   <h3 className="font-semibold mb-2">Parcelas:</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {debt.installments
-                      .filter((inst) => {
+                  {(() => {
+                    const filteredInstallments = debt.installments.filter(
+                      (inst) => {
                         if (month || year) {
                           const monthMatch = month
                             ? inst.dueDate.getMonth() ===
@@ -267,8 +260,11 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                           return monthMatch && yearMatch;
                         }
                         return true;
-                      })
-                      .map((installment) => {
+                      },
+                    );
+
+                    const installmentCards = filteredInstallments.map(
+                      (installment) => {
                         const isCurrentMonth =
                           installment.dueDate.getMonth() === currentMonth &&
                           installment.dueDate.getFullYear() === currentYear;
@@ -327,8 +323,17 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                             </div>
                           </Card>
                         );
-                      })}
-                  </div>
+                      },
+                    );
+
+                    return (
+                      <InstallmentCollapse
+                        totalCount={filteredInstallments.length}
+                      >
+                        {installmentCards}
+                      </InstallmentCollapse>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             );

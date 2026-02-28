@@ -23,6 +23,7 @@ import { formatCurrency } from '@/lib/format';
 import {
   getDashboardSummary,
   getMonthlyEvolution,
+  getOverdueInstallments,
   getSpendingByCard,
   getSpendingByPerson,
   getUpcomingInstallments,
@@ -49,12 +50,14 @@ export default async function HomePage() {
     spendingByPerson,
     monthlyEvolution,
     upcoming,
+    overdue,
   ] = await Promise.all([
     getDashboardSummary(userId),
     getSpendingByCard(userId),
     getSpendingByPerson(userId),
     getMonthlyEvolution(userId),
     getUpcomingInstallments(userId),
+    getOverdueInstallments(userId),
   ]);
 
   const hasData =
@@ -303,6 +306,84 @@ export default async function HomePage() {
               </CardHeader>
               <CardContent>
                 <MonthlyEvolutionChart data={monthlyEvolution} />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Overdue Installments */}
+          {overdue.length > 0 && (
+            <Card className="border-destructive">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-destructive">
+                    <AlertTriangle className="h-5 w-5" />
+                    Parcelas Vencidas ({overdue.length})
+                  </CardTitle>
+                  <CardDescription>
+                    Parcelas não pagas com vencimento anterior a hoje
+                  </CardDescription>
+                </div>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/debts">Ver Dívidas</Link>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Cartão</TableHead>
+                      <TableHead>Pessoa/Empresa</TableHead>
+                      <TableHead>Parcela</TableHead>
+                      <TableHead>Vencimento</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {overdue.map((inst) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const dueDate = new Date(inst.dueDate);
+                      const diffDays = Math.ceil(
+                        (today.getTime() - dueDate.getTime()) /
+                          (1000 * 60 * 60 * 24),
+                      );
+
+                      return (
+                        <TableRow key={inst.id}>
+                          <TableCell className="font-medium">
+                            {inst.debtDescription}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1.5">
+                              <CardBrandBadge name={inst.cardName} size={20} />
+                              <span className="text-sm">{inst.cardName}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>{inst.personName}</TableCell>
+                          <TableCell>
+                            {inst.installmentNumber}/{inst.totalInstallments}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {format(inst.dueDate, 'dd/MM/yyyy', {
+                                locale: ptBR,
+                              })}
+                              <Badge variant="destructive" className="text-xs">
+                                {diffDays === 1
+                                  ? '1 dia atrás'
+                                  : `${diffDays} dias atrás`}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right font-semibold text-destructive">
+                            {formatCurrency(inst.amount)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           )}

@@ -4,6 +4,17 @@ export async function listCreditCards(userId: string) {
   return prisma.creditCard.findMany({
     where: { userId },
     orderBy: { name: 'asc' },
+    include: {
+      _count: { select: { debts: true } },
+      debts: {
+        select: {
+          installments: {
+            where: { isPaid: false },
+            select: { amount: true },
+          },
+        },
+      },
+    },
   });
 }
 
