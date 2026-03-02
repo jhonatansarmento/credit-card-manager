@@ -339,17 +339,43 @@ export default async function DebtDetailPage({ params }: DebtDetailPageProps) {
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span
-                                className={`font-semibold ${
-                                  inst.isPaid
-                                    ? 'text-green-600 dark:text-green-400'
-                                    : isOverdue
-                                      ? 'text-red-600 dark:text-red-400'
-                                      : ''
-                                }`}
-                              >
-                                {formatCurrency(Number(inst.amount))}
-                              </span>
+                              <div className="text-right">
+                                <span
+                                  className={`font-semibold ${
+                                    inst.isPaid
+                                      ? 'text-green-600 dark:text-green-400'
+                                      : isOverdue
+                                        ? 'text-red-600 dark:text-red-400'
+                                        : ''
+                                  }`}
+                                >
+                                  {formatCurrency(Number(inst.amount))}
+                                </span>
+                                {debt.participants.length > 1 && (
+                                  <div className="flex flex-col gap-0.5 mt-1">
+                                    {debt.participants.map((p) => {
+                                      const proportion =
+                                        Number(debt.totalAmount) > 0
+                                          ? Number(p.amount) /
+                                            Number(debt.totalAmount)
+                                          : 0;
+                                      const participantInstAmount =
+                                        proportion * Number(inst.amount);
+                                      return (
+                                        <span
+                                          key={p.id}
+                                          className="text-xs text-muted-foreground"
+                                        >
+                                          {p.personCompany.name}:{' '}
+                                          {formatCurrency(
+                                            participantInstAmount,
+                                          )}
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
                               {inst.isPaid && (
                                 <Badge
                                   variant="outline"

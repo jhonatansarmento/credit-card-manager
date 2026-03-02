@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import {
   Form,
   FormControl,
@@ -208,19 +209,13 @@ export default function IncomeForm({ income }: IncomeFormProps) {
                     {watchedIsRecurring ? 'Valor Mensal' : 'Valor'}
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      placeholder="Ex: 5000.00"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value === ''
-                            ? ''
-                            : parseFloat(e.target.value),
-                        )
-                      }
+                    <CurrencyInput
+                      placeholder="R$ 0,00"
+                      value={field.value as number}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
                     />
                   </FormControl>
                   <FormMessage />

@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import {
   Dialog,
   DialogContent,
@@ -637,16 +638,12 @@ export default function DebtForm({
                     control={form.control}
                     name={`participants.${index}.amount`}
                     render={({ field: amountField }) => (
-                      <FormItem className="w-32">
+                      <FormItem className="w-36">
                         <FormControl>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="Valor"
-                            value={amountField.value ?? ''}
-                            onChange={(e) =>
-                              amountField.onChange(e.target.valueAsNumber)
-                            }
+                          <CurrencyInput
+                            placeholder="R$ 0,00"
+                            value={amountField.value}
+                            onChange={amountField.onChange}
                             onBlur={amountField.onBlur}
                             name={amountField.name}
                             ref={amountField.ref}
@@ -882,14 +879,10 @@ export default function DebtForm({
                       : 'Valor Total da Dívida'}
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder={
-                        watchedIsRecurring ? 'Ex: 422.00' : 'Ex: 1200.50'
-                      }
-                      value={field.value ?? ''}
-                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    <CurrencyInput
+                      placeholder="R$ 0,00"
+                      value={field.value}
+                      onChange={field.onChange}
                       onBlur={field.onBlur}
                       name={field.name}
                       ref={field.ref}
