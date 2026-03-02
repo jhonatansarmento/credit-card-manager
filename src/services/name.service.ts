@@ -24,6 +24,69 @@ export async function getName(id: string, userId: string) {
   });
 }
 
+export async function getNameDetail(id: string, userId: string) {
+  const person = await prisma.personCompany.findUnique({
+    where: { id, userId },
+  });
+
+  if (!person) return null;
+
+  // Get all debts where this person participates (via DebtParticipant)
+  const participations = await prisma.debtParticipant.findMany({
+    where: {
+      personCompanyId: id,
+      debt: { userId },
+    },
+    include: {
+      debt: {
+        include: {
+          creditCard: true,
+          category: true,
+          asset: true,
+          installments: { orderBy: { installmentNumber: 'asc' } },
+          participants: {
+            include: { personCompany: true },
+            orderBy: { amount: 'desc' },
+          },
+        },
+      },
+    },
+  });
+
+  // Also get legacy debts (personCompanyId directly on Debt, no DebtParticipant)
+  const participatedDebtIds = participations.map((p) => p.debt.id);
+  const legacyDebts = await prisma.debt.findMany({
+    where: {
+      userId,
+      personCompanyId: id,
+      id: { notIn: participatedDebtIds },
+    },
+    include: {
+      creditCard: true,
+      category: true,
+      asset: true,
+      installments: { orderBy: { installmentNumber: 'asc' } },
+      participants: {
+        include: { personCompany: true },
+        orderBy: { amount: 'desc' },
+      },
+    },
+  });
+
+  const allDebts = [
+    ...participations.map((p) => ({
+      ...p.debt,
+      participantAmount: Number(p.amount),
+    })),
+    ...legacyDebts.map((d) => ({
+      ...d,
+      participantAmount: Number(d.totalAmount),
+    })),
+  ];
+
+  return { person, debts: allDebts };
+}
+
 export async function createName(userId: string, data: { name: string }) {
   if (!data.name) {
     throw new Error('Nome é obrigatório.');

@@ -72,26 +72,26 @@ enum PaymentMethod {
 }
 
 model Debt {
-  id                   String        @id @default(cuid())
+  id                   String         @id @default(cuid())
   userId               String
-  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   cardId               String?
-  creditCard           CreditCard?   @relation(fields: [cardId], references: [id], onDelete: Restrict)
+  creditCard           CreditCard?    @relation(fields: [cardId], references: [id], onDelete: Restrict)
   personCompanyId      String?
   personCompany        PersonCompany? @relation(fields: [personCompanyId], references: [id], onDelete: Restrict)
   categoryId           String?
-  category             Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  category             Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   assetId              String?
-  asset                Asset?        @relation(fields: [assetId], references: [id], onDelete: SetNull)
-  paymentMethod        PaymentMethod @default(CREDIT_CARD)
+  asset                Asset?         @relation(fields: [assetId], references: [id], onDelete: SetNull)
+  paymentMethod        PaymentMethod  @default(CREDIT_CARD)
   dueDay               Int? // Dia de vencimento (1-31), usado quando não há cartão
-  totalAmount          Decimal       @db.Decimal(10, 2)
+  totalAmount          Decimal        @db.Decimal(10, 2)
   installmentsQuantity Int
-  installmentValue     Decimal       @db.Decimal(10, 2)
-  startDate            DateTime      @default(now()) @db.Date
+  installmentValue     Decimal        @db.Decimal(10, 2)
+  startDate            DateTime       @default(now()) @db.Date
   description          String
-  isArchived           Boolean       @default(false)
-  isRecurring          Boolean       @default(false)
+  isArchived           Boolean        @default(false)
+  isRecurring          Boolean        @default(false)
 
   installments Installment[]
   participants DebtParticipant[]

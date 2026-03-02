@@ -78,7 +78,14 @@ export default async function PersonCompaniesPage() {
 
                     return (
                       <TableRow key={pc.id}>
-                        <TableCell className="font-medium">{pc.name}</TableCell>
+                        <TableCell className="font-medium">
+                          <Link
+                            href={`/names/${pc.id}`}
+                            className="hover:underline"
+                          >
+                            {pc.name}
+                          </Link>
+                        </TableCell>
                         <TableCell>
                           <Badge variant="secondary">
                             {pc._count.debts}{' '}
@@ -129,7 +136,12 @@ export default async function PersonCompaniesPage() {
               return (
                 <Card key={pc.id} className="p-4">
                   <div className="flex items-center justify-between">
-                    <p className="font-medium">{pc.name}</p>
+                    <Link
+                      href={`/names/${pc.id}`}
+                      className="font-medium hover:underline"
+                    >
+                      {pc.name}
+                    </Link>
                     <div className="flex items-center gap-1">
                       <Button
                         variant="outline"
