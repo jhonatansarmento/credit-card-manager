@@ -33,6 +33,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { MonthPicker } from '@/components/ui/month-picker';
 import {
   Select,
   SelectContent,
@@ -1071,10 +1072,11 @@ export default function DebtForm({
                 <FormItem>
                   <FormLabel>Mês de Início</FormLabel>
                   <FormControl>
-                    <Input
-                      type="month"
-                      {...field}
+                    <MonthPicker
+                      value={field.value}
+                      onChange={field.onChange}
                       disabled={!debt && watchedPaidInstallments > 0}
+                      placeholder="Selecione o mês"
                     />
                   </FormControl>
                   <FormDescription>
