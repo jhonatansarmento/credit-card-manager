@@ -99,9 +99,9 @@ export async function getDashboardSummary(
 export async function getSpendingByCard(
   userId: string,
 ): Promise<SpendingByCard[]> {
-  // Get all debts grouped by card with installment aggregation
+  // Get all debts that have a card
   const debts = await prisma.debt.findMany({
-    where: { userId },
+    where: { userId, cardId: { not: null } },
     select: {
       cardId: true,
       creditCard: { select: { name: true } },
@@ -111,7 +111,9 @@ export async function getSpendingByCard(
   // Get unique card mappings
   const cardMap = new Map<string, string>();
   for (const d of debts) {
-    cardMap.set(d.cardId, d.creditCard.name);
+    if (d.cardId && d.creditCard) {
+      cardMap.set(d.cardId, d.creditCard.name);
+    }
   }
 
   // Aggregate installment totals grouped by card
@@ -251,7 +253,7 @@ export async function getUpcomingInstallments(
   return installments.map((inst) => ({
     id: inst.id,
     debtDescription: inst.debt.description,
-    cardName: inst.debt.creditCard.name,
+    cardName: inst.debt.creditCard?.name ?? 'Sem cartão',
     personName: inst.debt.personCompany.name,
     installmentNumber: inst.installmentNumber,
     totalInstallments: inst.debt.installmentsQuantity,
@@ -290,13 +292,68 @@ export async function getOverdueInstallments(
   return installments.map((inst) => ({
     id: inst.id,
     debtDescription: inst.debt.description,
-    cardName: inst.debt.creditCard.name,
+    cardName: inst.debt.creditCard?.name ?? 'Sem cartão',
     personName: inst.debt.personCompany.name,
     installmentNumber: inst.installmentNumber,
     totalInstallments: inst.debt.installmentsQuantity,
     dueDate: inst.dueDate,
     amount: Number(inst.amount),
   }));
+}
+
+// --- Spending by Asset ---
+
+export interface SpendingByAsset {
+  assetId: string;
+  assetName: string;
+  emoji: string;
+  totalAmount: number;
+  pendingAmount: number;
+  debtCount: number;
+}
+
+export async function getSpendingByAsset(
+  userId: string,
+): Promise<SpendingByAsset[]> {
+  const debts = await prisma.debt.findMany({
+    where: { userId, assetId: { not: null } },
+    select: {
+      assetId: true,
+      asset: { select: { name: true, emoji: true } },
+      installments: {
+        select: { amount: true, isPaid: true },
+      },
+    },
+  });
+
+  const assetMap = new Map<string, SpendingByAsset>();
+
+  for (const debt of debts) {
+    if (!debt.assetId || !debt.asset) continue;
+    const key = debt.assetId;
+    const existing = assetMap.get(key) || {
+      assetId: debt.assetId,
+      assetName: debt.asset.name,
+      emoji: debt.asset.emoji,
+      totalAmount: 0,
+      pendingAmount: 0,
+      debtCount: 0,
+    };
+
+    existing.debtCount += 1;
+    for (const inst of debt.installments) {
+      const amount = Number(inst.amount);
+      existing.totalAmount += amount;
+      if (!inst.isPaid) {
+        existing.pendingAmount += amount;
+      }
+    }
+    assetMap.set(key, existing);
+  }
+
+  return Array.from(assetMap.values()).sort(
+    (a, b) => b.totalAmount - a.totalAmount,
+  );
 }
 
 // --- Sprint 9 additions ---

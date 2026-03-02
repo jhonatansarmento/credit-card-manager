@@ -48,17 +48,30 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatCurrency } from '@/lib/format';
-import { debtSchema, type DebtFormData } from '@/lib/schemas/debt';
-import type { Category, CreditCard, PersonCompany } from '@prisma/client';
+import {
+  PAYMENT_METHODS,
+  PAYMENT_METHOD_LABELS,
+  debtSchema,
+  type DebtFormData,
+} from '@/lib/schemas/debt';
+import type {
+  Asset,
+  Category,
+  CreditCard,
+  PersonCompany,
+} from '@prisma/client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PlusCircle } from 'lucide-react';
 
 interface SerializedDebt {
   id: string;
-  cardId: string;
+  paymentMethod?: string;
+  cardId?: string | null;
   personCompanyId: string;
   categoryId?: string | null;
+  assetId?: string | null;
+  dueDay?: number | null;
   totalAmount: number;
   installmentsQuantity: number;
   installmentValue: number;
@@ -72,6 +85,8 @@ interface DebtFormProps {
   creditCards: CreditCard[];
   personCompanies: PersonCompany[];
   categories?: Category[];
+  assets?: Asset[];
+  initialAssetId?: string;
 }
 
 interface PreviewInstallment {
@@ -120,25 +135,38 @@ export default function DebtForm({
   creditCards,
   personCompanies,
   categories = [],
+  assets = [],
+  initialAssetId,
 }: DebtFormProps) {
   const router = useRouter();
   const [localCards, setLocalCards] = useState(creditCards);
   const [localNames, setLocalNames] = useState(personCompanies);
+  const [localAssets, setLocalAssets] = useState(assets);
   const [cardDialogOpen, setCardDialogOpen] = useState(false);
   const [nameDialogOpen, setNameDialogOpen] = useState(false);
+  const [assetDialogOpen, setAssetDialogOpen] = useState(false);
   const [newCardName, setNewCardName] = useState('');
   const [newCardDueDay, setNewCardDueDay] = useState('');
   const [newNameValue, setNewNameValue] = useState('');
+  const [newAssetName, setNewAssetName] = useState('');
+  const [newAssetEmoji, setNewAssetEmoji] = useState('📦');
   const [creatingCard, setCreatingCard] = useState(false);
   const [creatingName, setCreatingName] = useState(false);
+  const [creatingAsset, setCreatingAsset] = useState(false);
 
   const form = useForm<DebtFormData>({
     resolver: zodResolver(debtSchema),
     defaultValues: {
+      paymentMethod: (debt?.paymentMethod as any) ?? 'CREDIT_CARD',
       cardId: debt?.cardId ?? '',
       personCompanyId: debt?.personCompanyId ?? '',
       categoryId: debt?.categoryId ?? undefined,
-      totalAmount: debt?.totalAmount ?? undefined,
+      assetId: debt?.assetId ?? initialAssetId ?? undefined,
+      dueDay: debt?.dueDay ?? undefined,
+      totalAmount:
+        debt?.isRecurring && debt?.totalAmount && debt?.installmentsQuantity
+          ? Number((debt.totalAmount / debt.installmentsQuantity).toFixed(2))
+          : (debt?.totalAmount ?? undefined),
       installmentsQuantity: debt?.installmentsQuantity ?? undefined,
       startDate: debt?.startDate
         ? debt.startDate.toISOString().split('T')[0]
@@ -148,28 +176,39 @@ export default function DebtForm({
     },
   });
 
+  const watchedPaymentMethod = form.watch('paymentMethod');
+  const isCreditCard = watchedPaymentMethod === 'CREDIT_CARD';
+  const watchedIsRecurring = form.watch('isRecurring');
+
   const watchedValues = form.watch([
     'totalAmount',
     'installmentsQuantity',
     'startDate',
     'cardId',
+    'dueDay',
   ]);
 
-  const [totalAmount, installmentsQuantity, startDate, selectedCardId] =
-    watchedValues;
+  const [
+    totalAmount,
+    installmentsQuantity,
+    startDate,
+    selectedCardId,
+    formDueDay,
+  ] = watchedValues;
   const selectedCard = localCards.find((c) => c.id === selectedCardId);
+  const previewDueDay = isCreditCard ? selectedCard?.dueDay : formDueDay;
 
   const preview = useMemo(
     () =>
-      totalAmount && installmentsQuantity && startDate && selectedCard
+      totalAmount && installmentsQuantity && startDate && previewDueDay
         ? generatePreview(
             totalAmount,
             installmentsQuantity,
             startDate,
-            selectedCard.dueDay,
+            previewDueDay,
           )
         : [],
-    [totalAmount, installmentsQuantity, startDate, selectedCard],
+    [totalAmount, installmentsQuantity, startDate, previewDueDay],
   );
 
   const handleCreateCard = async () => {
@@ -222,15 +261,54 @@ export default function DebtForm({
     }
   };
 
+  const handleCreateAsset = async () => {
+    if (!newAssetName) return;
+    setCreatingAsset(true);
+    try {
+      const res = await fetch('/api/assets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newAssetName, emoji: newAssetEmoji }),
+      });
+      if (!res.ok) throw new Error('Erro ao criar bem/ativo.');
+      const asset = await res.json();
+      setLocalAssets((prev) => [...prev, asset]);
+      form.setValue('assetId', asset.id);
+      setAssetDialogOpen(false);
+      setNewAssetName('');
+      setNewAssetEmoji('📦');
+      toast.success('Bem/Ativo criado!');
+    } catch {
+      toast.error('Erro ao criar bem/ativo.');
+    } finally {
+      setCreatingAsset(false);
+    }
+  };
+
   const onSubmit = async (data: DebtFormData) => {
     try {
       const url = debt ? `/api/debts/${debt.id}` : '/api/debts';
       const method = debt ? 'PUT' : 'POST';
 
+      // For recurring debts, the user enters the monthly value.
+      // totalAmount in DB = monthly value × installments
+      const payload = { ...data };
+      if (data.isRecurring && data.totalAmount && data.installmentsQuantity) {
+        payload.totalAmount = Number(
+          (data.totalAmount * data.installmentsQuantity).toFixed(2),
+        );
+      }
+
+      // Default startDate to today if empty
+      if (!payload.startDate) {
+        const now = new Date();
+        payload.startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      }
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -258,81 +336,34 @@ export default function DebtForm({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="grid gap-4">
-            {/* Card field with inline creation */}
+            {/* Payment Method */}
             <FormField
               control={form.control}
-              name="cardId"
+              name="paymentMethod"
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Cartão</FormLabel>
-                    <Dialog
-                      open={cardDialogOpen}
-                      onOpenChange={setCardDialogOpen}
-                    >
-                      <DialogTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 text-xs"
-                        >
-                          <PlusCircle className="h-3 w-3 mr-1" />
-                          Novo
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Novo Cartão</DialogTitle>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-2">
-                          <div className="grid gap-2">
-                            <label className="text-sm font-medium">
-                              Nome do Cartão
-                            </label>
-                            <Input
-                              placeholder="Ex: Nubank"
-                              value={newCardName}
-                              onChange={(e) => setNewCardName(e.target.value)}
-                            />
-                          </div>
-                          <div className="grid gap-2">
-                            <label className="text-sm font-medium">
-                              Dia de Vencimento
-                            </label>
-                            <Input
-                              type="number"
-                              min="1"
-                              max="31"
-                              placeholder="Ex: 10"
-                              value={newCardDueDay}
-                              onChange={(e) => setNewCardDueDay(e.target.value)}
-                            />
-                          </div>
-                          <Button
-                            type="button"
-                            onClick={handleCreateCard}
-                            disabled={creatingCard}
-                          >
-                            {creatingCard ? 'Criando...' : 'Criar Cartão'}
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
+                  <FormLabel>Método de Pagamento</FormLabel>
                   <Select
-                    onValueChange={field.onChange}
+                    onValueChange={(v) => {
+                      field.onChange(v);
+                      // Clear card when switching away from credit card
+                      if (v !== 'CREDIT_CARD') {
+                        form.setValue('cardId', '');
+                      } else {
+                        form.setValue('dueDay', undefined);
+                      }
+                    }}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione um cartão" />
+                        <SelectValue placeholder="Selecione o método" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {localCards.map((card) => (
-                        <SelectItem key={card.id} value={card.id}>
-                          {card.name}
+                      {PAYMENT_METHODS.map((method) => (
+                        <SelectItem key={method} value={method}>
+                          {PAYMENT_METHOD_LABELS[method]}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -341,6 +372,130 @@ export default function DebtForm({
                 </FormItem>
               )}
             />
+
+            {/* Card field - only shown for CREDIT_CARD */}
+            {isCreditCard && (
+              <FormField
+                control={form.control}
+                name="cardId"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Cartão</FormLabel>
+                      <Dialog
+                        open={cardDialogOpen}
+                        onOpenChange={setCardDialogOpen}
+                      >
+                        <DialogTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 text-xs"
+                          >
+                            <PlusCircle className="h-3 w-3 mr-1" />
+                            Novo
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Novo Cartão</DialogTitle>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-2">
+                            <div className="grid gap-2">
+                              <label className="text-sm font-medium">
+                                Nome do Cartão
+                              </label>
+                              <Input
+                                placeholder="Ex: Nubank"
+                                value={newCardName}
+                                onChange={(e) => setNewCardName(e.target.value)}
+                              />
+                            </div>
+                            <div className="grid gap-2">
+                              <label className="text-sm font-medium">
+                                Dia de Vencimento
+                              </label>
+                              <Input
+                                type="number"
+                                min="1"
+                                max="31"
+                                placeholder="Ex: 10"
+                                value={newCardDueDay}
+                                onChange={(e) =>
+                                  setNewCardDueDay(e.target.value)
+                                }
+                              />
+                            </div>
+                            <Button
+                              type="button"
+                              onClick={handleCreateCard}
+                              disabled={creatingCard}
+                            >
+                              {creatingCard ? 'Criando...' : 'Criar Cartão'}
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value || undefined}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um cartão" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {localCards.map((card) => (
+                          <SelectItem key={card.id} value={card.id}>
+                            {card.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Due Day - only shown for non-card payment methods */}
+            {!isCreditCard && (
+              <FormField
+                control={form.control}
+                name="dueDay"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Dia de Vencimento</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="31"
+                        placeholder="Ex: 15 (dia do mês)"
+                        value={field.value ?? ''}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value === ''
+                              ? undefined
+                              : e.target.valueAsNumber,
+                          )
+                        }
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Dia do mês em que o pagamento vence (1-31).
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* Person/Company field with inline creation */}
             <FormField
@@ -445,17 +600,156 @@ export default function DebtForm({
               />
             )}
 
+            {/* Asset (Bem/Ativo) */}
+            <FormField
+              control={form.control}
+              name="assetId"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Bem/Ativo (Opcional)</FormLabel>
+                    <Dialog
+                      open={assetDialogOpen}
+                      onOpenChange={setAssetDialogOpen}
+                    >
+                      <DialogTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-xs"
+                        >
+                          <PlusCircle className="h-3 w-3 mr-1" />
+                          Novo
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Novo Bem/Ativo</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-2">
+                          <div className="grid gap-2">
+                            <label className="text-sm font-medium">Ícone</label>
+                            <div className="flex flex-wrap gap-2">
+                              {[
+                                '📦',
+                                '🚗',
+                                '🏠',
+                                '🏍️',
+                                '📱',
+                                '💻',
+                                '🎮',
+                                '🔧',
+                              ].map((emoji) => (
+                                <button
+                                  key={emoji}
+                                  type="button"
+                                  onClick={() => setNewAssetEmoji(emoji)}
+                                  className={`text-xl p-1.5 rounded border-2 ${
+                                    newAssetEmoji === emoji
+                                      ? 'border-primary bg-primary/10'
+                                      : 'border-transparent'
+                                  }`}
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="grid gap-2">
+                            <label className="text-sm font-medium">Nome</label>
+                            <Input
+                              placeholder="Ex: HB20 2024"
+                              value={newAssetName}
+                              onChange={(e) => setNewAssetName(e.target.value)}
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            onClick={handleCreateAsset}
+                            disabled={creatingAsset}
+                          >
+                            {creatingAsset ? 'Criando...' : 'Criar Bem/Ativo'}
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                  <Select
+                    onValueChange={(v) =>
+                      field.onChange(v === '__none__' ? null : v)
+                    }
+                    defaultValue={field.value || '__none__'}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Nenhum bem vinculado" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="__none__">Sem Bem/Ativo</SelectItem>
+                      {localAssets.map((asset) => (
+                        <SelectItem key={asset.id} value={asset.id}>
+                          {asset.emoji} {asset.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Vincule a um bem para agrupar dívidas relacionadas (ex:
+                    Carro, Imóvel).
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* isRecurring toggle */}
+            <FormField
+              control={form.control}
+              name="isRecurring"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        if (checked) {
+                          form.setValue('installmentsQuantity', 12);
+                        }
+                      }}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Dívida Recorrente</FormLabel>
+                    <FormDescription>
+                      Marque para assinaturas ou despesas mensais fixas (ex:
+                      seguro, Netflix, aluguel). O sistema criará 12 parcelas
+                      com o valor mensal informado.
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="totalAmount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Valor Total da Dívida</FormLabel>
+                  <FormLabel>
+                    {watchedIsRecurring
+                      ? 'Valor Mensal'
+                      : 'Valor Total da Dívida'}
+                  </FormLabel>
                   <FormControl>
                     <Input
                       type="number"
                       step="0.01"
-                      placeholder="Ex: 1200.50"
+                      placeholder={
+                        watchedIsRecurring ? 'Ex: 422.00' : 'Ex: 1200.50'
+                      }
                       value={field.value ?? ''}
                       onChange={(e) => field.onChange(e.target.valueAsNumber)}
                       onBlur={field.onBlur}
@@ -468,28 +762,44 @@ export default function DebtForm({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="installmentsQuantity"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Quantidade de Parcelas</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="1"
-                      placeholder="Ex: 12"
-                      value={field.value ?? ''}
-                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                      ref={field.ref}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {watchedIsRecurring ? (
+              <div className="rounded-md border p-3 bg-muted/50">
+                <p className="text-sm text-muted-foreground">
+                  📅 Serão criadas <strong>12 parcelas mensais</strong> com o
+                  valor informado acima. Ao final dos 12 meses, você pode
+                  duplicar ou criar uma nova dívida para renovar.
+                </p>
+                <input
+                  type="hidden"
+                  {...form.register('installmentsQuantity', {
+                    valueAsNumber: true,
+                  })}
+                />
+              </div>
+            ) : (
+              <FormField
+                control={form.control}
+                name="installmentsQuantity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quantidade de Parcelas</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        placeholder="Ex: 12"
+                        value={field.value ?? ''}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}
@@ -521,29 +831,6 @@ export default function DebtForm({
                     />
                   </FormControl>
                   <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* isRecurring toggle */}
-            <FormField
-              control={form.control}
-              name="isRecurring"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>Dívida Recorrente</FormLabel>
-                    <FormDescription>
-                      Marque para assinaturas ou despesas que se renovam
-                      automaticamente.
-                    </FormDescription>
-                  </div>
                 </FormItem>
               )}
             />
@@ -585,8 +872,9 @@ export default function DebtForm({
                   </Table>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Total: {formatCurrency(totalAmount)} em {installmentsQuantity}
-                  x de {formatCurrency(preview[0]?.amount ?? 0)}
+                  {watchedIsRecurring
+                    ? `12 meses de ${formatCurrency(preview[0]?.amount ?? 0)} = Total: ${formatCurrency(totalAmount * 12)}`
+                    : `Total: ${formatCurrency(totalAmount)} em ${installmentsQuantity}x de ${formatCurrency(preview[0]?.amount ?? 0)}`}
                 </p>
               </div>
             )}

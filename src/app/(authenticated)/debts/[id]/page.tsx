@@ -13,6 +13,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { getAuthSession } from '@/lib/auth-session';
 import { formatCurrency } from '@/lib/format';
+import { PAYMENT_METHOD_LABELS } from '@/lib/schemas/debt';
 import { getDebtDetail } from '@/services/debt.service';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -20,10 +21,12 @@ import {
   Archive,
   CalendarDays,
   CreditCard,
+  Package,
   Pencil,
   RefreshCw,
   Tag,
   User,
+  Wallet,
 } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -113,18 +116,32 @@ export default async function DebtDetailPage({ params }: DebtDetailPageProps) {
         <CardContent>
           {/* Info grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-xs text-muted-foreground">Cartão</p>
-                <div className="flex items-center gap-1.5">
-                  <CardBrandBadge name={debt.creditCard.name} size={20} />
+            {debt.creditCard ? (
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Cartão</p>
+                  <div className="flex items-center gap-1.5">
+                    <CardBrandBadge name={debt.creditCard.name} size={20} />
+                    <span className="text-sm font-medium">
+                      {debt.creditCard.name}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Wallet className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Pagamento</p>
                   <span className="text-sm font-medium">
-                    {debt.creditCard.name}
+                    {PAYMENT_METHOD_LABELS[
+                      debt.paymentMethod as keyof typeof PAYMENT_METHOD_LABELS
+                    ] || debt.paymentMethod}
                   </span>
                 </div>
               </div>
-            </div>
+            )}
             <div className="flex items-center gap-2">
               <User className="h-4 w-4 text-muted-foreground" />
               <div>
@@ -154,6 +171,25 @@ export default async function DebtDetailPage({ params }: DebtDetailPageProps) {
                   >
                     {debt.category.emoji} {debt.category.name}
                   </Badge>
+                </div>
+              </div>
+            )}
+            {debt.asset && (
+              <div className="flex items-center gap-2">
+                <Package className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Bem/Ativo</p>
+                  <Link
+                    href={`/assets/${debt.asset.id}`}
+                    className="hover:underline"
+                  >
+                    <Badge
+                      variant="outline"
+                      className="border-blue-500 text-blue-600 dark:text-blue-400"
+                    >
+                      {debt.asset.emoji} {debt.asset.name}
+                    </Badge>
+                  </Link>
                 </div>
               </div>
             )}

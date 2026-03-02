@@ -18,6 +18,7 @@ model User {
   personCompanies PersonCompany[]
   debts           Debt[]
   categories      Category[]
+  assets          Asset[]
   sessions        Session[]
   accounts        Account[]
 
@@ -59,16 +60,29 @@ model PersonCompany {
   @@unique([userId, name])
 }
 
+enum PaymentMethod {
+  CREDIT_CARD
+  BOLETO
+  DEBIT
+  PIX
+  TRANSFER
+  CASH
+}
+
 model Debt {
   id                   String        @id @default(cuid())
   userId               String
   user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cardId               String
-  creditCard           CreditCard    @relation(fields: [cardId], references: [id], onDelete: Restrict)
+  cardId               String?
+  creditCard           CreditCard?   @relation(fields: [cardId], references: [id], onDelete: Restrict)
   personCompanyId      String
   personCompany        PersonCompany @relation(fields: [personCompanyId], references: [id], onDelete: Restrict)
   categoryId           String?
   category             Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  assetId              String?
+  asset                Asset?        @relation(fields: [assetId], references: [id], onDelete: SetNull)
+  paymentMethod        PaymentMethod @default(CREDIT_CARD)
+  dueDay               Int? // Dia de vencimento (1-31), usado quando não há cartão
   totalAmount          Decimal       @db.Decimal(10, 2)
   installmentsQuantity Int
   installmentValue     Decimal       @db.Decimal(10, 2)
@@ -86,6 +100,24 @@ model Debt {
   @@index([cardId])
   @@index([personCompanyId])
   @@index([categoryId])
+  @@index([assetId])
+}
+
+model Asset {
+  id          String  @id @default(cuid())
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  emoji       String  @default("📦")
+  description String?
+
+  debts Debt[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, name])
+  @@index([userId])
 }
 
 model Installment {

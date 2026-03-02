@@ -28,6 +28,7 @@ import {
   getMonthlyEvolution,
   getMonthlyProjection,
   getOverdueInstallments,
+  getSpendingByAsset,
   getSpendingByCard,
   getSpendingByCategory,
   getSpendingByPerson,
@@ -39,6 +40,7 @@ import {
   AlertTriangle,
   CalendarClock,
   CreditCard,
+  Package,
   PieChart,
   Receipt,
   TrendingUp,
@@ -56,6 +58,7 @@ export default async function HomePage() {
     spendingByCard,
     spendingByPerson,
     spendingByCategory,
+    spendingByAsset,
     invoiceSummaries,
     monthlyEvolution,
     monthlyProjection,
@@ -66,6 +69,7 @@ export default async function HomePage() {
     getSpendingByCard(userId),
     getSpendingByPerson(userId),
     getSpendingByCategory(userId),
+    getSpendingByAsset(userId),
     getInvoiceSummaries(userId),
     getMonthlyEvolution(userId),
     getMonthlyProjection(userId, 6),
@@ -297,6 +301,62 @@ export default async function HomePage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Spending by Asset */}
+          {spendingByAsset.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Gastos por Bem/Ativo
+                </CardTitle>
+                <CardDescription>
+                  Quanto cada bem ou ativo está custando
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {spendingByAsset.map((asset) => {
+                    const paidPercent =
+                      asset.totalAmount > 0
+                        ? ((asset.totalAmount - asset.pendingAmount) /
+                            asset.totalAmount) *
+                          100
+                        : 0;
+                    return (
+                      <div key={asset.assetId} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{asset.emoji}</span>
+                            <Link
+                              href={`/assets/${asset.assetId}`}
+                              className="font-medium text-sm hover:underline"
+                            >
+                              {asset.assetName}
+                            </Link>
+                            <Badge variant="secondary" className="text-xs">
+                              {asset.debtCount}{' '}
+                              {asset.debtCount === 1 ? 'dívida' : 'dívidas'}
+                            </Badge>
+                          </div>
+                          <span className="text-sm font-semibold">
+                            {formatCurrency(asset.totalAmount)}
+                          </span>
+                        </div>
+                        <Progress value={paidPercent} className="h-2" />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>
+                            Pendente: {formatCurrency(asset.pendingAmount)}
+                          </span>
+                          <span>{paidPercent.toFixed(0)}% quitado</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Spending by Category + Invoice Summaries */}
           <div className="grid gap-6 lg:grid-cols-2">

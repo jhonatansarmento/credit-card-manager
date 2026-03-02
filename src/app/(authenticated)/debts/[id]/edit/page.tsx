@@ -3,6 +3,7 @@ import { PageBreadcrumb } from '@/components/page-breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { getAuthSession } from '@/lib/auth-session';
+import { listAssets } from '@/services/asset.service';
 import { listCategories } from '@/services/category.service';
 import { listCreditCards } from '@/services/credit-card.service';
 import { getDebt } from '@/services/debt.service';
@@ -32,23 +33,27 @@ export default async function EditDebtPage({ params }: EditDebtPageProps) {
     ...debt,
     totalAmount: Number(debt.totalAmount),
     installmentValue: Number(debt.installmentValue),
+    paymentMethod: debt.paymentMethod,
+    cardId: debt.cardId ?? undefined,
+    assetId: debt.assetId ?? undefined,
+    dueDay: debt.dueDay ?? undefined,
   };
 
-  const [creditCards, personCompanies, categories] = await Promise.all([
+  const [creditCards, personCompanies, categories, assets] = await Promise.all([
     listCreditCards(userId),
     listNames(userId),
     listCategories(userId),
+    listAssets(userId),
   ]);
 
-  if (creditCards.length === 0 || personCompanies.length === 0) {
+  if (personCompanies.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-center">
         <Card className="p-6">
           <CardTitle className="text-xl">Erro ao carregar dívida</CardTitle>
           <CardContent className="mt-4">
             <p className="mb-2">
-              Não foi possível carregar os dados necessários (cartões ou
-              pessoas/empresas).
+              Não foi possível carregar os dados necessários.
             </p>
             <Button asChild>
               <Link href="/debts">Voltar para Dívidas</Link>
@@ -73,6 +78,7 @@ export default async function EditDebtPage({ params }: EditDebtPageProps) {
           creditCards={creditCards}
           personCompanies={personCompanies}
           categories={categories}
+          assets={assets}
         />
       </div>
     </div>

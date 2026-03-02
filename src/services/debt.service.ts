@@ -2,9 +2,12 @@ import prisma from '@/lib/db';
 import { Prisma } from '@prisma/client';
 
 export interface DebtPayload {
-  cardId: string;
+  paymentMethod?: string;
+  cardId?: string | null;
   personCompanyId: string;
   categoryId?: string | null;
+  assetId?: string | null;
+  dueDay?: number | null;
   totalAmount: number;
   installmentsQuantity: number;
   startDate: string; // YYYY-MM-DD
@@ -15,6 +18,7 @@ export interface DebtPayload {
 export interface DebtFilters {
   cardId?: string;
   personCompanyId?: string;
+  assetId?: string;
   month?: string;
   year?: string;
   search?: string;
@@ -35,18 +39,28 @@ export interface PaginatedResult<T> {
 
 async function buildInstallments(
   userId: string,
-  cardId: string,
+  cardId: string | null | undefined,
+  debtDueDay: number | null | undefined,
   totalAmount: number,
   installmentsQuantity: number,
   startDate: Date,
 ) {
-  const creditCard = await prisma.creditCard.findUnique({
-    where: { id: cardId, userId },
-    select: { dueDay: true },
-  });
+  let dueDay: number;
 
-  if (!creditCard) {
-    throw new Error('Cartão de crédito não encontrado.');
+  if (cardId) {
+    const creditCard = await prisma.creditCard.findUnique({
+      where: { id: cardId, userId },
+      select: { dueDay: true },
+    });
+
+    if (!creditCard) {
+      throw new Error('Cartão de crédito não encontrado.');
+    }
+    dueDay = creditCard.dueDay;
+  } else if (debtDueDay) {
+    dueDay = debtDueDay;
+  } else {
+    throw new Error('Informe o dia de vencimento ou selecione um cartão.');
   }
 
   const baseInstallmentValue = Number.parseFloat(
@@ -74,7 +88,7 @@ async function buildInstallments(
       const daysInMonth = new Date(
         Date.UTC(targetYear, targetMonth + 1, 0),
       ).getUTCDate();
-      const day = Math.min(creditCard.dueDay, daysInMonth);
+      const day = Math.min(dueDay, daysInMonth);
 
       const isLast = i === installmentsQuantity - 1;
 
@@ -102,21 +116,28 @@ function parseStartDate(startDateString: string): Date {
 
 function validateDebtPayload(payload: DebtPayload) {
   const {
+    paymentMethod,
     cardId,
     personCompanyId,
     totalAmount,
     installmentsQuantity,
     description,
+    dueDay,
   } = payload;
 
   if (
-    !cardId ||
     !personCompanyId ||
     isNaN(totalAmount) ||
     isNaN(installmentsQuantity) ||
     !description
   ) {
     throw new Error('Todos os campos são obrigatórios.');
+  }
+  if (paymentMethod === 'CREDIT_CARD' && !cardId) {
+    throw new Error('Selecione um cartão de crédito.');
+  }
+  if (paymentMethod !== 'CREDIT_CARD' && !dueDay) {
+    throw new Error('Informe o dia de vencimento.');
   }
   if (totalAmount <= 0 || installmentsQuantity <= 0) {
     throw new Error(
@@ -138,6 +159,7 @@ export async function getDebtDetail(id: string, userId: string) {
       creditCard: true,
       personCompany: true,
       category: true,
+      asset: true,
       installments: { orderBy: { installmentNumber: 'asc' } },
     },
   });
@@ -150,6 +172,7 @@ export async function listDebts(
   const {
     cardId,
     personCompanyId,
+    assetId,
     month,
     year,
     search,
@@ -167,6 +190,7 @@ export async function listDebts(
 
   if (cardId) whereClause.cardId = cardId;
   if (personCompanyId) whereClause.personCompanyId = personCompanyId;
+  if (assetId) whereClause.assetId = assetId;
 
   // 6.4 — Search by description
   if (search) {
@@ -245,6 +269,7 @@ async function findDebts(
       creditCard: true,
       personCompany: true,
       category: true,
+      asset: true,
       installments: { orderBy: { installmentNumber: 'asc' } },
     },
     orderBy,
@@ -260,6 +285,7 @@ export async function createDebt(userId: string, payload: DebtPayload) {
   const { installmentValue, installmentsData } = await buildInstallments(
     userId,
     payload.cardId,
+    payload.dueDay,
     payload.totalAmount,
     payload.installmentsQuantity,
     startDate,
@@ -269,9 +295,12 @@ export async function createDebt(userId: string, payload: DebtPayload) {
     return await prisma.debt.create({
       data: {
         userId,
-        cardId: payload.cardId,
+        paymentMethod: (payload.paymentMethod as any) || 'CREDIT_CARD',
+        cardId: payload.cardId || null,
         personCompanyId: payload.personCompanyId,
         categoryId: payload.categoryId || null,
+        assetId: payload.assetId || null,
+        dueDay: payload.dueDay || null,
         totalAmount: payload.totalAmount,
         installmentsQuantity: payload.installmentsQuantity,
         installmentValue,
@@ -297,6 +326,7 @@ export async function updateDebt(
   const { installmentValue, installmentsData } = await buildInstallments(
     userId,
     payload.cardId,
+    payload.dueDay,
     payload.totalAmount,
     payload.installmentsQuantity,
     startDate,
@@ -322,9 +352,12 @@ export async function updateDebt(
     return await prisma.debt.update({
       where: { id, userId },
       data: {
-        cardId: payload.cardId,
+        paymentMethod: (payload.paymentMethod as any) || 'CREDIT_CARD',
+        cardId: payload.cardId || null,
         personCompanyId: payload.personCompanyId,
         categoryId: payload.categoryId ?? null,
+        assetId: payload.assetId ?? null,
+        dueDay: payload.dueDay || null,
         totalAmount: payload.totalAmount,
         installmentsQuantity: payload.installmentsQuantity,
         installmentValue,
@@ -398,9 +431,12 @@ export async function duplicateDebt(debtId: string, userId: string) {
   }
 
   const payload: DebtPayload = {
+    paymentMethod: original.paymentMethod,
     cardId: original.cardId,
     personCompanyId: original.personCompanyId,
     categoryId: original.categoryId,
+    assetId: original.assetId,
+    dueDay: original.dueDay,
     totalAmount: Number(original.totalAmount),
     installmentsQuantity: original.installmentsQuantity,
     startDate: original.startDate.toISOString().split('T')[0],
@@ -440,7 +476,7 @@ export async function exportDebtsCSV(
   });
 
   const lines: string[] = [
-    'Descrição,Cartão,Pessoa/Empresa,Valor Total,Qtd Parcelas,Valor Parcela,Data Início,Parcela Nº,Vencimento,Valor,Paga',
+    'Descrição,Método Pagamento,Cartão,Pessoa/Empresa,Bem/Ativo,Valor Total,Qtd Parcelas,Valor Parcela,Data Início,Parcela Nº,Vencimento,Valor,Paga',
   ];
 
   for (const debt of result.data) {
@@ -448,8 +484,10 @@ export async function exportDebtsCSV(
       lines.push(
         [
           `"${debt.description}"`,
-          `"${debt.creditCard.name}"`,
+          `"${debt.paymentMethod}"`,
+          `"${debt.creditCard?.name || '-'}"`,
           `"${debt.personCompany.name}"`,
+          `"${debt.asset?.name || '-'}"`,
           Number(debt.totalAmount).toFixed(2),
           debt.installmentsQuantity,
           Number(debt.installmentValue).toFixed(2),

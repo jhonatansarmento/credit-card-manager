@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
   const filters = {
     cardId: searchParams.get('cardId') ?? undefined,
     personCompanyId: searchParams.get('personCompanyId') ?? undefined,
+    assetId: searchParams.get('assetId') ?? undefined,
     month: searchParams.get('month') ?? undefined,
     year: searchParams.get('year') ?? undefined,
     search: searchParams.get('search') ?? undefined,

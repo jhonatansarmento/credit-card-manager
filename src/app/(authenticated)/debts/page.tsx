@@ -21,6 +21,8 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { getAuthSession } from '@/lib/auth-session';
 import { formatCurrency } from '@/lib/format';
+import { PAYMENT_METHOD_LABELS } from '@/lib/schemas/debt';
+import { listAssets } from '@/services/asset.service';
 import { listCreditCards } from '@/services/credit-card.service';
 import { listDebts } from '@/services/debt.service';
 import { listNames } from '@/services/name.service';
@@ -34,6 +36,7 @@ interface DebtsPageProps {
   searchParams: Promise<{
     cardId?: string;
     personCompanyId?: string;
+    assetId?: string;
     month?: string;
     year?: string;
     search?: string;
@@ -52,6 +55,7 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
   const {
     cardId,
     personCompanyId,
+    assetId,
     month,
     year,
     search,
@@ -64,12 +68,14 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
   const page = pageStr ? parseInt(pageStr) : 1;
   const showArchived = showArchivedStr === 'true';
 
-  const [creditCards, personCompanies, result] = await Promise.all([
+  const [creditCards, personCompanies, assets, result] = await Promise.all([
     listCreditCards(userId),
     listNames(userId),
+    listAssets(userId),
     listDebts(userId, {
       cardId,
       personCompanyId,
+      assetId,
       month,
       year,
       search,
@@ -86,6 +92,7 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
   const hasFilters = !!(
     cardId ||
     personCompanyId ||
+    assetId ||
     month ||
     year ||
     search ||
@@ -121,8 +128,10 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
         <DebtFilters
           creditCards={creditCards}
           personCompanies={personCompanies}
+          assets={assets}
           initialCardId={cardId}
           initialPersonCompanyId={personCompanyId}
+          initialAssetId={assetId}
           initialMonth={month}
           initialYear={year}
           initialSearch={search}
@@ -248,12 +257,23 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                       />
                     </div>
                     <div className="flex items-center gap-2 flex-wrap mt-1">
-                      <div className="flex items-center gap-1.5">
-                        <CardBrandBadge name={debt.creditCard.name} size={22} />
-                        <span className="text-sm text-muted-foreground">
-                          {debt.creditCard.name}
-                        </span>
-                      </div>
+                      {debt.creditCard ? (
+                        <div className="flex items-center gap-1.5">
+                          <CardBrandBadge
+                            name={debt.creditCard.name}
+                            size={22}
+                          />
+                          <span className="text-sm text-muted-foreground">
+                            {debt.creditCard.name}
+                          </span>
+                        </div>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">
+                          {PAYMENT_METHOD_LABELS[
+                            debt.paymentMethod as keyof typeof PAYMENT_METHOD_LABELS
+                          ] || debt.paymentMethod}
+                        </Badge>
+                      )}
                       <Badge variant="outline" className="text-xs">
                         {debt.personCompany.name}
                       </Badge>
@@ -279,6 +299,14 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                           style={{ borderColor: debt.category.color }}
                         >
                           {debt.category.emoji} {debt.category.name}
+                        </Badge>
+                      )}
+                      {debt.asset && (
+                        <Badge
+                          variant="outline"
+                          className="text-xs border-blue-500 text-blue-600 dark:text-blue-400"
+                        >
+                          {debt.asset.emoji} {debt.asset.name}
                         </Badge>
                       )}
                     </div>

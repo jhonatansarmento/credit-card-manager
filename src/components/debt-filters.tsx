@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { CreditCard, PersonCompany } from '@prisma/client';
+import type { Asset, CreditCard, PersonCompany } from '@prisma/client';
 import {
   Archive,
   ArrowDownAZ,
@@ -41,8 +41,10 @@ const MONTH_NAMES = [
 interface DebtFiltersProps {
   creditCards: CreditCard[];
   personCompanies: PersonCompany[];
+  assets: Asset[];
   initialCardId?: string;
   initialPersonCompanyId?: string;
+  initialAssetId?: string;
   initialMonth?: string;
   initialYear?: string;
   initialSearch?: string;
@@ -54,8 +56,10 @@ interface DebtFiltersProps {
 export default function DebtFilters({
   creditCards,
   personCompanies,
+  assets,
   initialCardId,
   initialPersonCompanyId,
+  initialAssetId,
   initialMonth,
   initialYear,
   initialSearch,
@@ -70,6 +74,9 @@ export default function DebtFilters({
   const [selectedPersonCompanyId, setSelectedPersonCompanyId] = useState(
     initialPersonCompanyId || 'all',
   );
+  const [selectedAssetId, setSelectedAssetId] = useState(
+    initialAssetId || 'all',
+  );
   const [selectedMonth, setSelectedMonth] = useState(initialMonth || 'all');
   const [selectedYear, setSelectedYear] = useState(initialYear || 'all');
   const [searchText, setSearchText] = useState(initialSearch || '');
@@ -82,6 +89,7 @@ export default function DebtFilters({
   useEffect(() => {
     setSelectedCardId(initialCardId || 'all');
     setSelectedPersonCompanyId(initialPersonCompanyId || 'all');
+    setSelectedAssetId(initialAssetId || 'all');
     setSelectedMonth(initialMonth || 'all');
     setSelectedYear(initialYear || 'all');
     setSearchText(initialSearch || '');
@@ -91,6 +99,7 @@ export default function DebtFilters({
   }, [
     initialCardId,
     initialPersonCompanyId,
+    initialAssetId,
     initialMonth,
     initialYear,
     initialSearch,
@@ -113,6 +122,8 @@ export default function DebtFilters({
           overrides.personCompanyId !== undefined
             ? overrides.personCompanyId
             : selectedPersonCompanyId,
+        assetId:
+          overrides.assetId !== undefined ? overrides.assetId : selectedAssetId,
         month: overrides.month !== undefined ? overrides.month : selectedMonth,
         year: overrides.year !== undefined ? overrides.year : selectedYear,
         search: overrides.search !== undefined ? overrides.search : searchText,
@@ -148,6 +159,7 @@ export default function DebtFilters({
       searchParams,
       selectedCardId,
       selectedPersonCompanyId,
+      selectedAssetId,
       selectedMonth,
       selectedYear,
       searchText,
@@ -165,6 +177,11 @@ export default function DebtFilters({
   const handlePersonCompanyChange = (value: string) => {
     setSelectedPersonCompanyId(value);
     navigate({ personCompanyId: value });
+  };
+
+  const handleAssetChange = (value: string) => {
+    setSelectedAssetId(value);
+    navigate({ assetId: value });
   };
 
   const handleMonthChange = (value: string) => {
@@ -232,6 +249,7 @@ export default function DebtFilters({
   const clearFilters = () => {
     setSelectedCardId('all');
     setSelectedPersonCompanyId('all');
+    setSelectedAssetId('all');
     setSelectedMonth('all');
     setSelectedYear('all');
     setSearchText('');
@@ -244,6 +262,7 @@ export default function DebtFilters({
   const hasActiveFilters =
     selectedCardId !== 'all' ||
     selectedPersonCompanyId !== 'all' ||
+    selectedAssetId !== 'all' ||
     selectedMonth !== 'all' ||
     selectedYear !== 'all' ||
     searchText !== '' ||
@@ -320,6 +339,31 @@ export default function DebtFilters({
             </SelectContent>
           </Select>
         </div>
+
+        {/* Asset filter */}
+        {assets.length > 0 && (
+          <div className="grid gap-1.5 flex-1 min-w-0">
+            <label
+              htmlFor="filterAsset"
+              className="text-xs font-medium text-muted-foreground"
+            >
+              Bem/Ativo
+            </label>
+            <Select value={selectedAssetId} onValueChange={handleAssetChange}>
+              <SelectTrigger id="filterAsset">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {assets.map((asset) => (
+                  <SelectItem key={asset.id} value={asset.id}>
+                    {asset.emoji} {asset.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div className="grid gap-1.5 flex-1 min-w-0">
           <label className="text-xs font-medium text-muted-foreground">
