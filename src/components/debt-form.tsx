@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -107,7 +107,8 @@ function generatePreview(
 ): PreviewInstallment[] {
   if (!totalAmount || !installmentsQuantity || !startDate || !dueDay) return [];
 
-  const start = new Date(startDate + 'T00:00:00Z');
+  const dateStr = startDate.length === 7 ? startDate + '-01' : startDate;
+  const start = new Date(dateStr + 'T00:00:00Z');
   if (isNaN(start.getTime())) return [];
 
   const baseValue = parseFloat((totalAmount / installmentsQuantity).toFixed(2));
@@ -158,6 +159,8 @@ export default function DebtForm({
   const [creatingName, setCreatingName] = useState(false);
   const [activeParticipantIndex, setActiveParticipantIndex] = useState(0);
   const [creatingAsset, setCreatingAsset] = useState(false);
+  const [inputMode, setInputMode] = useState<'TOTAL' | 'INSTALLMENT'>('TOTAL');
+  const [installmentAmount, setInstallmentAmount] = useState<number>(0);
 
   // For recurring debts, divide participant amounts by installments for display
   const displayedTotalAmount =
@@ -190,8 +193,9 @@ export default function DebtForm({
       totalAmount: displayedTotalAmount,
       installmentsQuantity: debt?.installmentsQuantity ?? undefined,
       startDate: debt?.startDate
-        ? debt.startDate.toISOString().split('T')[0]
-        : '',
+        ? debt.startDate.toISOString().slice(0, 7)
+        : `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
+      paidInstallments: 0,
       description: debt?.description ?? '',
       isRecurring: debt?.isRecurring ?? false,
     },
@@ -223,6 +227,57 @@ export default function DebtForm({
   ] = watchedValues;
   const selectedCard = localCards.find((c) => c.id === selectedCardId);
   const previewDueDay = isCreditCard ? selectedCard?.dueDay : formDueDay;
+
+  const watchedPaidInstallments = form.watch('paidInstallments') || 0;
+  const watchedParticipants = form.watch('participants');
+
+  const participantsSum = useMemo(
+    () => watchedParticipants?.reduce((s, p) => s + (p.amount || 0), 0) ?? 0,
+    [watchedParticipants],
+  );
+  const isSumValid =
+    Math.abs(participantsSum - (totalAmount || 0)) <= 0.01 || !totalAmount;
+
+  // Auto-compute totalAmount in INSTALLMENT mode
+  useEffect(() => {
+    if (inputMode === 'INSTALLMENT' && !watchedIsRecurring) {
+      if (installmentAmount > 0 && installmentsQuantity > 0) {
+        const total = Number(
+          (installmentAmount * installmentsQuantity).toFixed(2),
+        );
+        form.setValue('totalAmount', total, { shouldValidate: true });
+      }
+    }
+  }, [
+    inputMode,
+    installmentAmount,
+    installmentsQuantity,
+    watchedIsRecurring,
+    form,
+  ]);
+
+  // Auto-sync single participant amount with totalAmount
+  useEffect(() => {
+    if (fields.length === 1 && totalAmount > 0) {
+      form.setValue('participants.0.amount', totalAmount, {
+        shouldValidate: true,
+      });
+    }
+  }, [totalAmount, fields.length, form]);
+
+  // Auto-compute startDate from paidInstallments
+  useEffect(() => {
+    if (!debt && watchedPaidInstallments > 0) {
+      const now = new Date();
+      const computedStart = new Date(
+        now.getFullYear(),
+        now.getMonth() - watchedPaidInstallments,
+        1,
+      );
+      const startStr = `${computedStart.getFullYear()}-${String(computedStart.getMonth() + 1).padStart(2, '0')}`;
+      form.setValue('startDate', startStr);
+    }
+  }, [watchedPaidInstallments, debt, form]);
 
   const preview = useMemo(
     () =>
@@ -332,10 +387,10 @@ export default function DebtForm({
         }));
       }
 
-      // Default startDate to today if empty
+      // Default startDate to current month if empty
       if (!payload.startDate) {
         const now = new Date();
-        payload.startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        payload.startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
       }
 
       const res = await fetch(url, {
@@ -688,15 +743,17 @@ export default function DebtForm({
               )}
 
               {/* Participants sum indicator */}
-              {fields.length > 1 && (
-                <p className="text-xs text-muted-foreground">
-                  Soma:{' '}
-                  {formatCurrency(
-                    form
-                      .getValues('participants')
-                      ?.reduce((s, p) => s + (p.amount || 0), 0) ?? 0,
-                  )}{' '}
-                  / Total: {formatCurrency(totalAmount || 0)}
+              {totalAmount > 0 && (
+                <p
+                  className={`text-xs font-medium ${
+                    isSumValid ? 'text-muted-foreground' : 'text-destructive'
+                  }`}
+                >
+                  Soma participantes: {formatCurrency(participantsSum)} / Total:{' '}
+                  {formatCurrency(totalAmount || 0)}
+                  {!isSumValid && (
+                    <span className="ml-1">⚠️ Os valores não conferem!</span>
+                  )}
                 </p>
               )}
             </div>
@@ -868,30 +925,105 @@ export default function DebtForm({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="totalAmount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {watchedIsRecurring
-                      ? 'Valor Mensal'
-                      : 'Valor Total da Dívida'}
-                  </FormLabel>
-                  <FormControl>
-                    <CurrencyInput
-                      placeholder="R$ 0,00"
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                      ref={field.ref}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Input Mode Toggle */}
+            {!watchedIsRecurring && (
+              <div className="space-y-2">
+                <FormLabel>Como deseja informar o valor?</FormLabel>
+                <div className="flex gap-1 rounded-lg border p-1">
+                  <Button
+                    type="button"
+                    variant={inputMode === 'TOTAL' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="flex-1 text-xs"
+                    onClick={() => setInputMode('TOTAL')}
+                  >
+                    Valor Total
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={inputMode === 'INSTALLMENT' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="flex-1 text-xs"
+                    onClick={() => {
+                      if (totalAmount && installmentsQuantity) {
+                        setInstallmentAmount(
+                          Number(
+                            (totalAmount / installmentsQuantity).toFixed(2),
+                          ),
+                        );
+                      }
+                      setInputMode('INSTALLMENT');
+                    }}
+                  >
+                    Valor da Parcela
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {inputMode === 'TOTAL' || watchedIsRecurring ? (
+              <FormField
+                control={form.control}
+                name="totalAmount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {watchedIsRecurring
+                        ? 'Valor Mensal'
+                        : 'Valor Total da Dívida'}
+                    </FormLabel>
+                    <FormControl>
+                      <CurrencyInput
+                        placeholder="R$ 0,00"
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
+                    </FormControl>
+                    {inputMode === 'TOTAL' &&
+                      !watchedIsRecurring &&
+                      totalAmount > 0 &&
+                      installmentsQuantity > 0 && (
+                        <FormDescription>
+                          Parcela:{' '}
+                          {formatCurrency(totalAmount / installmentsQuantity)}
+                        </FormDescription>
+                      )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : (
+              <>
+                <div className="grid gap-2">
+                  <FormLabel>Valor da Parcela</FormLabel>
+                  <CurrencyInput
+                    placeholder="R$ 0,00"
+                    value={installmentAmount}
+                    onChange={setInstallmentAmount}
+                  />
+                </div>
+                <FormField
+                  control={form.control}
+                  name="totalAmount"
+                  render={() => (
+                    <FormItem>
+                      {totalAmount > 0 && (
+                        <div className="rounded-md bg-muted/50 p-3">
+                          <p className="text-sm text-muted-foreground">
+                            Valor total calculado:{' '}
+                            <strong>{formatCurrency(totalAmount)}</strong>
+                          </p>
+                        </div>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
 
             {watchedIsRecurring ? (
               <div className="rounded-md border p-3 bg-muted/50">
@@ -937,17 +1069,73 @@ export default function DebtForm({
               name="startDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Data de Início (Opcional)</FormLabel>
+                  <FormLabel>Mês de Início</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} />
+                    <Input
+                      type="month"
+                      {...field}
+                      disabled={!debt && watchedPaidInstallments > 0}
+                    />
                   </FormControl>
                   <FormDescription>
-                    Deixe em branco para usar o mês atual como início.
+                    {!debt && watchedPaidInstallments > 0
+                      ? 'Calculado automaticamente a partir das parcelas já pagas.'
+                      : 'Mês em que a primeira parcela vence.'}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {/* Paid installments - only for new debts */}
+            {!debt && !watchedIsRecurring && (
+              <FormField
+                control={form.control}
+                name="paidInstallments"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Parcelas já pagas (Opcional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        max={
+                          installmentsQuantity
+                            ? installmentsQuantity - 1
+                            : undefined
+                        }
+                        placeholder="Ex: 4"
+                        value={field.value || ''}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value === '' ? 0 : e.target.valueAsNumber,
+                          )
+                        }
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Informe quantas parcelas você já pagou. O sistema marcará
+                      como pagas e calculará o mês de início automaticamente.
+                    </FormDescription>
+                    {watchedPaidInstallments > 0 &&
+                      installmentsQuantity > 0 && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          📅 Próxima parcela:{' '}
+                          <strong>
+                            {watchedPaidInstallments + 1}ª de{' '}
+                            {installmentsQuantity}
+                          </strong>{' '}
+                          no mês atual
+                        </p>
+                      )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}
@@ -984,21 +1172,31 @@ export default function DebtForm({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {preview.map((inst) => (
-                        <TableRow key={inst.number}>
-                          <TableCell className="text-xs py-1">
-                            {inst.number}/{preview.length}
-                          </TableCell>
-                          <TableCell className="text-xs py-1">
-                            {format(inst.dueDate, 'dd/MM/yyyy', {
-                              locale: ptBR,
-                            })}
-                          </TableCell>
-                          <TableCell className="text-xs py-1 text-right">
-                            {formatCurrency(inst.amount)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {preview.map((inst, index) => {
+                        const isPaidPreview =
+                          index < (watchedPaidInstallments || 0);
+                        return (
+                          <TableRow
+                            key={inst.number}
+                            className={isPaidPreview ? 'opacity-50' : ''}
+                          >
+                            <TableCell className="text-xs py-1">
+                              {inst.number}/{preview.length}
+                              {isPaidPreview && (
+                                <span className="ml-1 text-green-600">✓</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-xs py-1">
+                              {format(inst.dueDate, 'dd/MM/yyyy', {
+                                locale: ptBR,
+                              })}
+                            </TableCell>
+                            <TableCell className="text-xs py-1 text-right">
+                              {formatCurrency(inst.amount)}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>

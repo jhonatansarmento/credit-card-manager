@@ -15,9 +15,10 @@ export interface DebtPayload {
   dueDay?: number | null;
   totalAmount: number;
   installmentsQuantity: number;
-  startDate: string; // YYYY-MM-DD
+  startDate: string; // YYYY-MM or YYYY-MM-DD
   description: string;
   isRecurring?: boolean;
+  paidInstallments?: number;
 }
 
 export interface DebtFilters {
@@ -109,7 +110,10 @@ async function buildInstallments(
 
 function parseStartDate(startDateString: string): Date {
   if (startDateString) {
-    const date = new Date(startDateString + 'T00:00:00Z');
+    // Support YYYY-MM format (month picker) by appending -01
+    const dateStr =
+      startDateString.length === 7 ? startDateString + '-01' : startDateString;
+    const date = new Date(dateStr + 'T00:00:00Z');
     if (isNaN(date.getTime())) throw new Error('Data de início inválida.');
     return date;
   }
@@ -314,6 +318,17 @@ export async function createDebt(userId: string, payload: DebtPayload) {
     payload.installmentsQuantity,
     startDate,
   );
+
+  // Mark first N installments as paid
+  if (payload.paidInstallments && payload.paidInstallments > 0) {
+    for (
+      let i = 0;
+      i < payload.paidInstallments && i < installmentsData.length;
+      i++
+    ) {
+      installmentsData[i].isPaid = true;
+    }
+  }
 
   try {
     return await prisma.debt.create({

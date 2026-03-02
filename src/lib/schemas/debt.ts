@@ -56,10 +56,16 @@ export const debtSchema = z
       .max(120, { message: 'O máximo de parcelas é 120.' }),
     startDate: z
       .string()
-      .refine((val) => val === '' || /^\d{4}-\d{2}-\d{2}$/.test(val), {
-        message: 'Data inválida (AAAA-MM-DD).',
+      .refine((val) => val === '' || /^\d{4}-\d{2}(-\d{2})?$/.test(val), {
+        message: 'Data inválida.',
       })
       .default(''),
+    paidInstallments: z
+      .number()
+      .int()
+      .min(0, { message: 'Não pode ser negativo.' })
+      .optional()
+      .default(0),
     description: z
       .string()
       .min(1, { message: 'A descrição é obrigatória.' })
@@ -108,6 +114,19 @@ export const debtSchema = z
         code: z.ZodIssueCode.custom,
         message: 'Não é permitido repetir participantes na mesma dívida.',
         path: ['participants'],
+      });
+    }
+
+    // Validate paidInstallments < installmentsQuantity
+    if (
+      data.paidInstallments &&
+      data.paidInstallments >= data.installmentsQuantity
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'O número de parcelas pagas deve ser menor que o total de parcelas.',
+        path: ['paidInstallments'],
       });
     }
   });
