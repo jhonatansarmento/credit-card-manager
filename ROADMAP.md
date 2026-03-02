@@ -246,7 +246,7 @@
 
 ---
 
-## Sprint 10c — Multi-Participantes por Dívida 🔲
+## Sprint 10c — Multi-Participantes por Dívida ✅ (commit `f222a0f`)
 
 > Permite associar múltiplas pessoas/empresas a uma mesma dívida, cada uma com seu valor/parcela.
 > Casos de uso: compra com itens de pessoas diferentes, viagens divididas, etc.
@@ -264,16 +264,16 @@
 
 | #      | Tarefa                                                                                                                                                     | Status |
 | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 10c.1  | Model `DebtParticipant` (debtId, personCompanyId, amount) + tornar `personCompanyId` nullable na Debt + migration com dados existentes                     | 🔲     |
-| 10c.2  | Atualizar `debtSchema` Zod — campo `participants: [{personCompanyId, amount}]`, validação de soma = totalAmount, mínimo 1 participante                     | 🔲     |
-| 10c.3  | Atualizar `debt.service.ts` — CRUD com createMany/deleteMany de participants, atualizar `duplicateDebt`, `exportDebtsCSV`, `listDebts` (filtro por pessoa) | 🔲     |
-| 10c.4  | Atualizar API routes — aceitar participants no payload                                                                                                     | 🔲     |
-| 10c.5  | Refatorar `debt-form.tsx` — lista de participantes com "+ Adicionar pessoa", botão "Dividir igualmente", validação de soma, criação inline de pessoa       | 🔲     |
-| 10c.6  | Atualizar listagem de dívidas (`/debts`) — mostrar múltiplos badges de participantes                                                                       | 🔲     |
-| 10c.7  | Atualizar detalhe da dívida (`/debts/[id]`) — seção de participantes com nome + valor                                                                      | 🔲     |
-| 10c.8  | Atualizar delete protection de PersonCompany — checar DebtParticipant em vez de Debt.personCompanyId                                                       | 🔲     |
-| 10c.9  | Atualizar dashboard queries que usam personCompany (spending by person) para usar DebtParticipant                                                          | 🔲     |
-| 10c.10 | Build, verificar e commit                                                                                                                                  | 🔲     |
+| 10c.1  | Model `DebtParticipant` (debtId, personCompanyId, amount) + tornar `personCompanyId` nullable na Debt + migration com dados existentes                     | ✅     |
+| 10c.2  | Atualizar `debtSchema` Zod — campo `participants: [{personCompanyId, amount}]`, validação de soma = totalAmount, mínimo 1 participante                     | ✅     |
+| 10c.3  | Atualizar `debt.service.ts` — CRUD com createMany/deleteMany de participants, atualizar `duplicateDebt`, `exportDebtsCSV`, `listDebts` (filtro por pessoa) | ✅     |
+| 10c.4  | Atualizar API routes — aceitar participants no payload                                                                                                     | ✅     |
+| 10c.5  | Refatorar `debt-form.tsx` — lista de participantes com "+ Adicionar pessoa", botão "Dividir igualmente", validação de soma, criação inline de pessoa       | ✅     |
+| 10c.6  | Atualizar listagem de dívidas (`/debts`) — mostrar múltiplos badges de participantes                                                                       | ✅     |
+| 10c.7  | Atualizar detalhe da dívida (`/debts/[id]`) — seção de participantes com nome + valor                                                                      | ✅     |
+| 10c.8  | Atualizar delete protection de PersonCompany — checar DebtParticipant em vez de Debt.personCompanyId                                                       | ✅     |
+| 10c.9  | Atualizar dashboard queries que usam personCompany (spending by person) para usar DebtParticipant                                                          | ✅     |
+| 10c.10 | Build, verificar e commit                                                                                                                                  | ✅     |
 
 ---
 
@@ -325,11 +325,11 @@
 | 9      | Features de Produto            | 12/12   | ✅ Concluído |
 | 10     | Proventos & Fluxo de Caixa     | 12/12   | ✅ Concluído |
 | 10b    | Otimização do Dashboard        | 8/8     | ✅ Concluído |
-| 10c    | Multi-Participantes por Dívida | 0/10    | 🔲 Pendente  |
+| 10c    | Multi-Participantes por Dívida | 10/10   | ✅ Concluído |
 | 11     | Segurança & Autenticação       | 0/9     | 🔲 Pendente  |
 | 12     | Testes, Performance & DX       | 0/10    | 🔲 Pendente  |
 
-**Total: 99/128 tarefas concluídas (77%)**
+**Total: 109/128 tarefas concluídas (85%)**
 
 ---
 
