@@ -30,7 +30,14 @@ export async function middleware(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
 
   // Rotas protegidas
-  const protectedPaths = ['/cards', '/names', '/debts'];
+  const protectedPaths = [
+    '/cards',
+    '/names',
+    '/debts',
+    '/incomes',
+    '/cash-flow',
+    '/assets',
+  ];
   const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
 
   if (isProtected && !sessionCookie) {

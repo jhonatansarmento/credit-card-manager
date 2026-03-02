@@ -34,10 +34,13 @@ import {
   getSpendingByPerson,
   getUpcomingInstallments,
 } from '@/services/dashboard.service';
+import { getIncomesSummary } from '@/services/income.service';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   AlertTriangle,
+  ArrowLeftRight,
+  ArrowUpRight,
   CalendarClock,
   CreditCard,
   Package,
@@ -64,6 +67,7 @@ export default async function HomePage() {
     monthlyProjection,
     upcoming,
     overdue,
+    incomeSummary,
   ] = await Promise.all([
     getDashboardSummary(userId),
     getSpendingByCard(userId),
@@ -75,6 +79,7 @@ export default async function HomePage() {
     getMonthlyProjection(userId, 6),
     getUpcomingInstallments(userId),
     getOverdueInstallments(userId),
+    getIncomesSummary(userId),
   ]);
 
   const hasData =
@@ -186,6 +191,84 @@ export default async function HomePage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Income & Balance Section */}
+          {(incomeSummary.activeIncomes > 0 ||
+            incomeSummary.expectedThisMonth > 0) && (
+            <Card className="border-green-200 dark:border-green-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ArrowUpRight className="h-5 w-5 text-green-500" />
+                  Balanço do Mês
+                </CardTitle>
+                <CardDescription>
+                  Comparativo de receita vs despesa neste mês
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Receita
+                    </p>
+                    <p className="text-xl font-bold text-green-600 dark:text-green-400">
+                      {formatCurrency(incomeSummary.receivedThisMonth)}
+                    </p>
+                    {incomeSummary.expectedThisMonth >
+                      incomeSummary.receivedThisMonth && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Esperado:{' '}
+                        {formatCurrency(incomeSummary.expectedThisMonth)}
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Despesa
+                    </p>
+                    <p className="text-xl font-bold text-destructive">
+                      {formatCurrency(
+                        summary.totalPending > 0
+                          ? summary.installmentsDueThisMonth *
+                              (summary.totalPending /
+                                Math.max(1, summary.activeDebts))
+                          : 0,
+                      )}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mb-1">Saldo</p>
+                    {(() => {
+                      const monthExpense =
+                        summary.installmentsDueThisMonth > 0
+                          ? summary.installmentsDueThisMonth *
+                            (summary.totalPending /
+                              Math.max(1, summary.activeDebts))
+                          : 0;
+                      const balance =
+                        incomeSummary.receivedThisMonth - monthExpense;
+                      return (
+                        <p
+                          className={`text-xl font-bold ${balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}
+                        >
+                          {balance >= 0 ? '+' : ''}
+                          {formatCurrency(balance)}
+                        </p>
+                      );
+                    })()}
+                  </div>
+                </div>
+                <div className="mt-4 text-center">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/cash-flow">
+                      <ArrowLeftRight className="h-4 w-4 mr-2" />
+                      Ver fluxo de caixa completo
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Spending by Card */}

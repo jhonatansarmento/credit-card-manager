@@ -168,36 +168,71 @@
 
 ---
 
-## Sprint 10 — Segurança & Autenticação 🔲
+---
 
-| #    | Tarefa                                                                                                                                                              | Status |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 10.1 | Fluxo de "esqueci minha senha" (reset por email via better-auth `forgetPassword` plugin)                                                                            | 🔲     |
-| 10.2 | Verificação de email obrigatória (o campo `emailVerified` existe mas não é usado)                                                                                   | 🔲     |
-| 10.3 | Página de perfil do usuário (`/settings/account`) — editar nome, email, avatar e trocar senha (integração com better-auth), acessível via sidebar                   | 🔲     |
-| 10.4 | Deleção de conta pelo próprio usuário com confirmação por senha e exclusão em cascata de todos os dados                                                             | 🔲     |
-| 10.5 | Gerenciamento de sessões — ver e revogar sessões ativas (listar dispositivos/IPs com botão "Encerrar sessão")                                                       | 🔲     |
-| 10.6 | Validação de variáveis de ambiente com Zod no startup (t3-env)                                                                                                      | 🔲     |
-| 10.7 | Rate limiter com Redis/Vercel KV (substituir in-memory que não funciona em serverless)                                                                              | 🔲     |
-| 10.8 | Notificação in-app (banner/toast) ao fazer login se houver parcelas vencidas, com link direto para a seção de vencidas                                              | 🔲     |
-| 10.9 | Limites de gasto por cartão e/ou categoria — campo `spendingLimit` no cartão/categoria com alerta visual quando atingir 80%/100% (barra de progresso, estilo Visor) | 🔲     |
+## Sprint 10 — Proventos & Fluxo de Caixa 🔲
+
+> Rastreamento de receitas (salário, freelance, investimentos, etc.) com lançamentos mensais
+> e página dedicada de fluxo de caixa comparando receita vs despesa.
+
+### Decisões de Design
+
+- **Modelo de dados**: `Income` (provento) + `IncomeEntry` (lançamento mensal), similar a `Debt` + `Installment`
+- **IncomeType enum fixo**: `SALARY`, `FREELANCE`, `INVESTMENT`, `RENTAL`, `GIFT`, `OTHER` — sem CRUD extra de categorias
+- **Geração sob demanda (rolling)**: entries para proventos recorrentes são gerados ao acessar a listagem (mês atual + 3 meses à frente). `ensureEntries()` é idempotente via unique constraint `[incomeId, referenceMonth]`
+- **Sem data limite para recorrentes**: salário e similares não têm `endDate` — projeção futura usa o valor cadastrado enquanto ativo
+- **Sem PersonCompany**: proventos não vinculam a pessoa/empresa
+- **Sem PaymentMethod**: apenas descrição textual livre
+- **Visualização**: cards resumo no dashboard existente + página dedicada `/cash-flow` com gráficos detalhados
+- **Gráfico**: `ComposedChart` do recharts — barras verdes (receita), barras vermelhas (despesa), linha azul (saldo acumulado). Meses futuros com opacidade reduzida
+
+| #     | Tarefa                                                                                                                                                                                                   | Status |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 10.1  | Enum `IncomeType` + Model `Income` (name, amount, incomeType, isRecurring, receiveDay, startDate, endDate?, isArchived) + Model `IncomeEntry` (referenceMonth, amount, isReceived, receivedAt) no Prisma | 🔲     |
+| 10.2  | Migration SQL manual `20260302120000_add_incomes` (padrão Neon — sem shadow DB)                                                                                                                          | 🔲     |
+| 10.3  | Schema Zod `incomeSchema` com `INCOME_TYPES`, `INCOME_TYPE_LABELS`, superRefine para receiveDay obrigatório quando isRecurring                                                                           | 🔲     |
+| 10.4  | Service layer `income.service.ts`: CRUD + `ensureEntries()` (geração sob demanda) + `toggleEntryReceived` + `getIncomesSummary` + `getMonthlyCashFlow`                                                   | 🔲     |
+| 10.5  | API routes: `/api/incomes` (GET, POST), `/api/incomes/[id]` (PUT, DELETE), `/api/incomes/entries/[id]/toggle` (PATCH)                                                                                    | 🔲     |
+| 10.6  | Formulário `income-form.tsx`: name, incomeType (Select), amount, isRecurring (Switch), receiveDay (condicional), startDate, endDate (condicional), description                                           | 🔲     |
+| 10.7  | Páginas CRUD `/incomes`: listagem com tabela/cards + badge de tipo + toggle recebido inline, `/incomes/new`, `/incomes/[id]` (detalhe), `/incomes/[id]/edit`                                             | 🔲     |
+| 10.8  | Página `/cash-flow`: cards resumo (receita, despesa, saldo, acumulado) + gráfico `ComposedChart` + tabela mensal com cores condicionais                                                                  | 🔲     |
+| 10.9  | Componente `cash-flow-chart.tsx`: Bar verde (receita) + Bar vermelha (despesa) + Line azul (saldo acumulado), meses futuros com opacidade reduzida                                                       | 🔲     |
+| 10.10 | Dashboard: card "Receita do Mês" + seção "Balanço do Mês" (receita vs despesa visual) + link para `/cash-flow`                                                                                           | 🔲     |
+| 10.11 | Sidebar: links "Proventos" (TrendingUp) e "Fluxo de Caixa" (ArrowLeftRight) na seção Organização                                                                                                         | 🔲     |
+| 10.12 | Middleware: proteger rotas `/incomes` e `/cash-flow`                                                                                                                                                     | 🔲     |
 
 ---
 
-## Sprint 11 — Testes, Performance & DX 🔲
+## Sprint 11 — Segurança & Autenticação 🔲
+
+| #    | Tarefa                                                                                                                                                              | Status |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 11.1 | Fluxo de "esqueci minha senha" (reset por email via better-auth `forgetPassword` plugin)                                                                            | 🔲     |
+| 11.2 | Verificação de email obrigatória (o campo `emailVerified` existe mas não é usado)                                                                                   | 🔲     |
+| 11.3 | Página de perfil do usuário (`/settings/account`) — editar nome, email, avatar e trocar senha (integração com better-auth), acessível via sidebar                   | 🔲     |
+| 11.4 | Deleção de conta pelo próprio usuário com confirmação por senha e exclusão em cascata de todos os dados                                                             | 🔲     |
+| 11.5 | Gerenciamento de sessões — ver e revogar sessões ativas (listar dispositivos/IPs com botão "Encerrar sessão")                                                       | 🔲     |
+| 11.6 | Validação de variáveis de ambiente com Zod no startup (t3-env)                                                                                                      | 🔲     |
+| 11.7 | Rate limiter com Redis/Vercel KV (substituir in-memory que não funciona em serverless)                                                                              | 🔲     |
+| 11.8 | Notificação in-app (banner/toast) ao fazer login se houver parcelas vencidas, com link direto para a seção de vencidas                                              | 🔲     |
+| 11.9 | Limites de gasto por cartão e/ou categoria — campo `spendingLimit` no cartão/categoria com alerta visual quando atingir 80%/100% (barra de progresso, estilo Visor) | 🔲     |
+
+---
+
+## Sprint 12 — Testes, Performance & DX 🔲
 
 | #     | Tarefa                                                                                                                                           | Status |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
-| 11.1  | Configurar Vitest + React Testing Library (`vitest.config.ts`, scripts `test` e `test:watch` no `package.json`)                                  | 🔲     |
-| 11.2  | Testes unitários dos services: `credit-card`, `name`, `debt` (`buildInstallments`, `duplicateDebt`, `exportDebtsCSV`)                            | 🔲     |
-| 11.3  | Testes dos schemas Zod e utilitários (`formatCurrency`, `sanitizeObject`, `rateLimit`, `parseBody`)                                              | 🔲     |
-| 11.4  | Configurar Playwright para E2E — fluxo de login, criação de cartão, criação de dívida e toggle de parcela                                        | 🔲     |
-| 11.5  | CI/CD pipeline no GitHub Actions: lint, type-check, testes unitários, build em cada PR                                                           | 🔲     |
-| 11.6  | Seed script do Prisma para dados de desenvolvimento (`prisma/seed.ts`) com cenários variados (dívidas quitadas, parciais, vencidas, recorrentes) | 🔲     |
-| 11.7  | Extrair tipos compartilhados (`DebtWithRelations`, `CreditCardWithCounts`, `CategoryWithEmoji`) para `src/lib/types.ts`                          | 🔲     |
-| 11.8  | Lazy load do `recharts` e `Sankey` via `next/dynamic` com `ssr: false` + debounce no campo de busca do `DebtFilters` (300ms)                     | 🔲     |
-| 11.9  | Responsividade aprimorada: converter tabelas de cartões e nomes para layout de cards empilhados em telas `< md`                                  | 🔲     |
-| 11.10 | Auditoria de acessibilidade: `aria-label`, `focus-visible`, skip-to-content link, `aria-live` nos feedbacks dinâmicos                            | 🔲     |
+| 12.1  | Configurar Vitest + React Testing Library (`vitest.config.ts`, scripts `test` e `test:watch` no `package.json`)                                  | 🔲     |
+| 12.2  | Testes unitários dos services: `credit-card`, `name`, `debt` (`buildInstallments`, `duplicateDebt`, `exportDebtsCSV`)                            | 🔲     |
+| 12.3  | Testes dos schemas Zod e utilitários (`formatCurrency`, `sanitizeObject`, `rateLimit`, `parseBody`)                                              | 🔲     |
+| 12.4  | Configurar Playwright para E2E — fluxo de login, criação de cartão, criação de dívida e toggle de parcela                                        | 🔲     |
+| 12.5  | CI/CD pipeline no GitHub Actions: lint, type-check, testes unitários, build em cada PR                                                           | 🔲     |
+| 12.6  | Seed script do Prisma para dados de desenvolvimento (`prisma/seed.ts`) com cenários variados (dívidas quitadas, parciais, vencidas, recorrentes) | 🔲     |
+| 12.7  | Extrair tipos compartilhados (`DebtWithRelations`, `CreditCardWithCounts`, `CategoryWithEmoji`) para `src/lib/types.ts`                          | 🔲     |
+| 12.8  | Lazy load do `recharts` e `Sankey` via `next/dynamic` com `ssr: false` + debounce no campo de busca do `DebtFilters` (300ms)                     | 🔲     |
+| 12.9  | Responsividade aprimorada: converter tabelas de cartões e nomes para layout de cards empilhados em telas `< md`                                  | 🔲     |
+| 12.10 | Auditoria de acessibilidade: `aria-label`, `focus-visible`, skip-to-content link, `aria-live` nos feedbacks dinâmicos                            | 🔲     |
 
 ---
 
@@ -214,11 +249,12 @@
 | 7      | Correções & Polimento      | 10/10   | ✅ Concluído |
 | 8      | Sidebar & Settings         | 10/10   | ✅ Concluído |
 | 9      | Features de Produto        | 12/12   | ✅ Concluído |
-| 10     | Segurança & Autenticação   | 0/9     | 🔲 Pendente  |
-| 11     | Testes, Performance & DX   | 0/10    | 🔲 Pendente  |
+| 10     | Proventos & Fluxo de Caixa | 0/12    | 🔲 Pendente  |
+| 11     | Segurança & Autenticação   | 0/9     | 🔲 Pendente  |
+| 12     | Testes, Performance & DX   | 0/10    | 🔲 Pendente  |
 
-**Total: 79/98 tarefas concluídas (81%)**
+**Total: 79/110 tarefas concluídas (72%)**
 
 ---
 
-_Última atualização: 28/02/2026_
+_Última atualização: 02/03/2026_

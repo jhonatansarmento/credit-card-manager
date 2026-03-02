@@ -6,7 +6,15 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { CreditCard, Home, Package, Users, Wallet } from 'lucide-react';
+import {
+  ArrowLeftRight,
+  CreditCard,
+  Home,
+  Package,
+  TrendingUp,
+  Users,
+  Wallet,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createContext, useContext, useEffect, useState } from 'react';
@@ -31,6 +39,8 @@ const navSections: NavSection[] = [
     items: [
       { href: '/', label: 'Dashboard', icon: Home },
       { href: '/debts', label: 'Dívidas', icon: Wallet },
+      { href: '/incomes', label: 'Proventos', icon: TrendingUp },
+      { href: '/cash-flow', label: 'Fluxo de Caixa', icon: ArrowLeftRight },
     ],
   },
   {

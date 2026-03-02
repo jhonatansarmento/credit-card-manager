@@ -19,6 +19,7 @@ model User {
   debts           Debt[]
   categories      Category[]
   assets          Asset[]
+  incomes         Income[]
   sessions        Session[]
   accounts        Account[]
 
@@ -157,6 +158,53 @@ model Category {
   @@unique([userId, name])
   @@index([userId])
   @@index([parentId])
+}
+
+enum IncomeType {
+  SALARY
+  FREELANCE
+  INVESTMENT
+  RENTAL
+  GIFT
+  OTHER
+}
+
+model Income {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  amount      Decimal    @db.Decimal(10, 2) // Valor mensal/unitário
+  incomeType  IncomeType
+  isRecurring Boolean    @default(false)
+  receiveDay  Int? // Dia do mês para recorrentes (1-31)
+  startDate   DateTime   @default(now()) @db.Date
+  endDate     DateTime?  @db.Date // null = indefinido (sem data limite)
+  isArchived  Boolean    @default(false)
+
+  entries IncomeEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, name])
+  @@index([userId, isArchived])
+}
+
+model IncomeEntry {
+  id             String    @id @default(cuid())
+  incomeId       String
+  income         Income    @relation(fields: [incomeId], references: [id], onDelete: Cascade)
+  referenceMonth DateTime  @db.Date // Primeiro dia do mês de referência
+  amount         Decimal   @db.Decimal(10, 2)
+  isReceived     Boolean   @default(false)
+  receivedAt     DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@unique([incomeId, referenceMonth])
+  @@index([incomeId])
 }
 
 model Session {
