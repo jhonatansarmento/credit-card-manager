@@ -1,7 +1,6 @@
 import CardBrandBadge from '@/components/card-brand-badge';
 import { CategoryDonutChart } from '@/components/category-donut-chart';
-import { MonthlyEvolutionChart } from '@/components/monthly-evolution-chart';
-import { ProjectionChart } from '@/components/projection-chart';
+import { FinancialTimelineChart } from '@/components/financial-timeline-chart';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,14 +23,11 @@ import { getAuthSession } from '@/lib/auth-session';
 import { formatCurrency } from '@/lib/format';
 import {
   getDashboardSummary,
-  getInvoiceSummaries,
   getMonthlyEvolution,
-  getMonthlyProjection,
   getOverdueInstallments,
   getSpendingByAsset,
   getSpendingByCard,
   getSpendingByCategory,
-  getSpendingByPerson,
   getUpcomingInstallments,
 } from '@/services/dashboard.service';
 import { getIncomesSummary } from '@/services/income.service';
@@ -45,7 +41,6 @@ import {
   CreditCard,
   Package,
   PieChart,
-  Receipt,
   TrendingUp,
   Users,
   Wallet,
@@ -59,24 +54,18 @@ export default async function HomePage() {
   const [
     summary,
     spendingByCard,
-    spendingByPerson,
     spendingByCategory,
     spendingByAsset,
-    invoiceSummaries,
     monthlyEvolution,
-    monthlyProjection,
     upcoming,
     overdue,
     incomeSummary,
   ] = await Promise.all([
     getDashboardSummary(userId),
     getSpendingByCard(userId),
-    getSpendingByPerson(userId),
     getSpendingByCategory(userId),
     getSpendingByAsset(userId),
-    getInvoiceSummaries(userId),
     getMonthlyEvolution(userId),
-    getMonthlyProjection(userId, 6),
     getUpcomingInstallments(userId),
     getOverdueInstallments(userId),
     getIncomesSummary(userId),
@@ -191,379 +180,6 @@ export default async function HomePage() {
               </CardContent>
             </Card>
           </div>
-
-          {/* Income & Balance Section */}
-          {(incomeSummary.activeIncomes > 0 ||
-            incomeSummary.expectedThisMonth > 0) && (
-            <Card className="border-green-200 dark:border-green-800">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ArrowUpRight className="h-5 w-5 text-green-500" />
-                  Balanço do Mês
-                </CardTitle>
-                <CardDescription>
-                  Comparativo de receita vs despesa neste mês
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground mb-1">
-                      Receita
-                    </p>
-                    <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                      {formatCurrency(incomeSummary.receivedThisMonth)}
-                    </p>
-                    {incomeSummary.expectedThisMonth >
-                      incomeSummary.receivedThisMonth && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Esperado:{' '}
-                        {formatCurrency(incomeSummary.expectedThisMonth)}
-                      </p>
-                    )}
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground mb-1">
-                      Despesa
-                    </p>
-                    <p className="text-xl font-bold text-destructive">
-                      {formatCurrency(
-                        summary.totalPending > 0
-                          ? summary.installmentsDueThisMonth *
-                              (summary.totalPending /
-                                Math.max(1, summary.activeDebts))
-                          : 0,
-                      )}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground mb-1">Saldo</p>
-                    {(() => {
-                      const monthExpense =
-                        summary.installmentsDueThisMonth > 0
-                          ? summary.installmentsDueThisMonth *
-                            (summary.totalPending /
-                              Math.max(1, summary.activeDebts))
-                          : 0;
-                      const balance =
-                        incomeSummary.receivedThisMonth - monthExpense;
-                      return (
-                        <p
-                          className={`text-xl font-bold ${balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}
-                        >
-                          {balance >= 0 ? '+' : ''}
-                          {formatCurrency(balance)}
-                        </p>
-                      );
-                    })()}
-                  </div>
-                </div>
-                <div className="mt-4 text-center">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/cash-flow">
-                      <ArrowLeftRight className="h-4 w-4 mr-2" />
-                      Ver fluxo de caixa completo
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Spending by Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
-                  Gastos por Cartão
-                </CardTitle>
-                <CardDescription>
-                  Distribuição de valores por cartão de crédito
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {spendingByCard.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Nenhum gasto registrado
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {spendingByCard.map((card) => {
-                      const paidPercent =
-                        card.totalAmount > 0
-                          ? ((card.totalAmount - card.pendingAmount) /
-                              card.totalAmount) *
-                            100
-                          : 0;
-                      return (
-                        <div key={card.cardName} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <CardBrandBadge name={card.cardName} size={24} />
-                              <span className="font-medium text-sm">
-                                {card.cardName}
-                              </span>
-                              <Badge variant="secondary" className="text-xs">
-                                {card.debtCount}{' '}
-                                {card.debtCount === 1 ? 'dívida' : 'dívidas'}
-                              </Badge>
-                            </div>
-                            <span className="text-sm font-semibold">
-                              {formatCurrency(card.totalAmount)}
-                            </span>
-                          </div>
-                          <Progress value={paidPercent} className="h-2" />
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>
-                              Pendente: {formatCurrency(card.pendingAmount)}
-                            </span>
-                            <span>{paidPercent.toFixed(0)}% quitado</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Spending by Person/Company */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Gastos por Pessoa/Empresa
-                </CardTitle>
-                <CardDescription>
-                  Distribuição de valores por pessoa ou empresa
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {spendingByPerson.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Nenhum gasto registrado
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {spendingByPerson.map((person) => {
-                      const paidPercent =
-                        person.totalAmount > 0
-                          ? ((person.totalAmount - person.pendingAmount) /
-                              person.totalAmount) *
-                            100
-                          : 0;
-                      return (
-                        <div key={person.personName} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm">
-                                {person.personName}
-                              </span>
-                              <Badge variant="secondary" className="text-xs">
-                                {person.debtCount}{' '}
-                                {person.debtCount === 1 ? 'dívida' : 'dívidas'}
-                              </Badge>
-                            </div>
-                            <span className="text-sm font-semibold">
-                              {formatCurrency(person.totalAmount)}
-                            </span>
-                          </div>
-                          <Progress value={paidPercent} className="h-2" />
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>
-                              Pendente: {formatCurrency(person.pendingAmount)}
-                            </span>
-                            <span>{paidPercent.toFixed(0)}% quitado</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Spending by Asset */}
-          {spendingByAsset.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Gastos por Bem/Ativo
-                </CardTitle>
-                <CardDescription>
-                  Quanto cada bem ou ativo está custando
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {spendingByAsset.map((asset) => {
-                    const paidPercent =
-                      asset.totalAmount > 0
-                        ? ((asset.totalAmount - asset.pendingAmount) /
-                            asset.totalAmount) *
-                          100
-                        : 0;
-                    return (
-                      <div key={asset.assetId} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg">{asset.emoji}</span>
-                            <Link
-                              href={`/assets/${asset.assetId}`}
-                              className="font-medium text-sm hover:underline"
-                            >
-                              {asset.assetName}
-                            </Link>
-                            <Badge variant="secondary" className="text-xs">
-                              {asset.debtCount}{' '}
-                              {asset.debtCount === 1 ? 'dívida' : 'dívidas'}
-                            </Badge>
-                          </div>
-                          <span className="text-sm font-semibold">
-                            {formatCurrency(asset.totalAmount)}
-                          </span>
-                        </div>
-                        <Progress value={paidPercent} className="h-2" />
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>
-                            Pendente: {formatCurrency(asset.pendingAmount)}
-                          </span>
-                          <span>{paidPercent.toFixed(0)}% quitado</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Spending by Category + Invoice Summaries */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Spending by Category Donut Chart */}
-            {spendingByCategory.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <PieChart className="h-5 w-5" />
-                    Gastos por Categoria
-                  </CardTitle>
-                  <CardDescription>
-                    Distribuição de valores por categoria de despesa
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <CategoryDonutChart data={spendingByCategory} />
-                  <div className="mt-4 space-y-2">
-                    {spendingByCategory.map((cat) => (
-                      <div
-                        key={cat.categoryName}
-                        className="flex items-center justify-between text-sm"
-                      >
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: cat.color }}
-                          />
-                          <span>
-                            {cat.emoji} {cat.categoryName}
-                          </span>
-                        </div>
-                        <span className="font-medium">
-                          {formatCurrency(cat.totalAmount)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Invoice Summaries */}
-            {invoiceSummaries.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Receipt className="h-5 w-5" />
-                    Faturas Atuais
-                  </CardTitle>
-                  <CardDescription>
-                    Resumo das faturas no ciclo de cobrança atual
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {invoiceSummaries.map((invoice) => (
-                      <div
-                        key={invoice.cardId}
-                        className="flex items-center justify-between p-3 border rounded-lg"
-                      >
-                        <div className="flex items-center gap-3">
-                          <CardBrandBadge name={invoice.cardName} size={28} />
-                          <div>
-                            <p className="font-medium text-sm">
-                              {invoice.cardName}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {invoice.installmentCount} parcela
-                              {invoice.installmentCount !== 1 ? 's' : ''} •
-                              Venc. dia {invoice.dueDay}
-                              {invoice.closingDay
-                                ? ` • Fecha dia ${invoice.closingDay}`
-                                : ''}
-                            </p>
-                          </div>
-                        </div>
-                        <span className="text-lg font-bold">
-                          {formatCurrency(invoice.currentInvoiceTotal)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          {/* Monthly Evolution Chart */}
-          {monthlyEvolution.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Evolução Mensal
-                </CardTitle>
-                <CardDescription>
-                  Comparativo de parcelas pagas vs pendentes ao longo do tempo
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <MonthlyEvolutionChart data={monthlyEvolution} />
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Monthly Projection Chart */}
-          {monthlyProjection.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CalendarClock className="h-5 w-5" />
-                  Projeção de Gastos
-                </CardTitle>
-                <CardDescription>
-                  Projeção de parcelas pendentes e acumulado para os próximos
-                  meses
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ProjectionChart data={monthlyProjection} />
-              </CardContent>
-            </Card>
-          )}
 
           {/* Overdue Installments */}
           {overdue.length > 0 && (
@@ -699,6 +315,246 @@ export default async function HomePage() {
                     );
                   })}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Income & Balance Section */}
+          {(incomeSummary.activeIncomes > 0 ||
+            incomeSummary.expectedThisMonth > 0) && (
+            <Card className="border-green-200 dark:border-green-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ArrowUpRight className="h-5 w-5 text-green-500" />
+                  Balanço do Mês
+                </CardTitle>
+                <CardDescription>
+                  Comparativo de receita vs despesa neste mês
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Receita
+                    </p>
+                    <p className="text-xl font-bold text-green-600 dark:text-green-400">
+                      {formatCurrency(incomeSummary.receivedThisMonth)}
+                    </p>
+                    {incomeSummary.expectedThisMonth >
+                      incomeSummary.receivedThisMonth && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Esperado:{' '}
+                        {formatCurrency(incomeSummary.expectedThisMonth)}
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Despesa
+                    </p>
+                    <p className="text-xl font-bold text-destructive">
+                      {formatCurrency(summary.amountDueThisMonth)}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mb-1">Saldo</p>
+                    {(() => {
+                      const balance =
+                        incomeSummary.receivedThisMonth -
+                        summary.amountDueThisMonth;
+                      return (
+                        <p
+                          className={`text-xl font-bold ${balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}
+                        >
+                          {balance >= 0 ? '+' : ''}
+                          {formatCurrency(balance)}
+                        </p>
+                      );
+                    })()}
+                  </div>
+                </div>
+                <div className="mt-4 text-center">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/cash-flow">
+                      <ArrowLeftRight className="h-4 w-4 mr-2" />
+                      Ver fluxo de caixa completo
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Spending by Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Gastos por Cartão
+                </CardTitle>
+                <CardDescription>
+                  Distribuição de valores por cartão de crédito
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {spendingByCard.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Nenhum gasto registrado
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {spendingByCard.map((card) => {
+                      const paidPercent =
+                        card.totalAmount > 0
+                          ? ((card.totalAmount - card.pendingAmount) /
+                              card.totalAmount) *
+                            100
+                          : 0;
+                      return (
+                        <div key={card.cardName} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <CardBrandBadge name={card.cardName} size={24} />
+                              <span className="font-medium text-sm">
+                                {card.cardName}
+                              </span>
+                              <Badge variant="secondary" className="text-xs">
+                                {card.debtCount}{' '}
+                                {card.debtCount === 1 ? 'dívida' : 'dívidas'}
+                              </Badge>
+                            </div>
+                            <span className="text-sm font-semibold">
+                              {formatCurrency(card.totalAmount)}
+                            </span>
+                          </div>
+                          <Progress value={paidPercent} className="h-2" />
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>
+                              Pendente: {formatCurrency(card.pendingAmount)}
+                            </span>
+                            <span>{paidPercent.toFixed(0)}% quitado</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Spending by Category Donut Chart */}
+            {spendingByCategory.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="h-5 w-5" />
+                    Gastos por Categoria
+                  </CardTitle>
+                  <CardDescription>
+                    Distribuição de valores por categoria de despesa
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <CategoryDonutChart data={spendingByCategory} />
+                  <div className="mt-4 space-y-2">
+                    {spendingByCategory.map((cat) => (
+                      <div
+                        key={cat.categoryName}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: cat.color }}
+                          />
+                          <span>
+                            {cat.emoji} {cat.categoryName}
+                          </span>
+                        </div>
+                        <span className="font-medium">
+                          {formatCurrency(cat.totalAmount)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Spending by Asset */}
+          {spendingByAsset.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Gastos por Bem/Ativo
+                </CardTitle>
+                <CardDescription>
+                  Quanto cada bem ou ativo está custando
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {spendingByAsset.map((asset) => {
+                    const paidPercent =
+                      asset.totalAmount > 0
+                        ? ((asset.totalAmount - asset.pendingAmount) /
+                            asset.totalAmount) *
+                          100
+                        : 0;
+                    return (
+                      <div key={asset.assetId} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{asset.emoji}</span>
+                            <Link
+                              href={`/assets/${asset.assetId}`}
+                              className="font-medium text-sm hover:underline"
+                            >
+                              {asset.assetName}
+                            </Link>
+                            <Badge variant="secondary" className="text-xs">
+                              {asset.debtCount}{' '}
+                              {asset.debtCount === 1 ? 'dívida' : 'dívidas'}
+                            </Badge>
+                          </div>
+                          <span className="text-sm font-semibold">
+                            {formatCurrency(asset.totalAmount)}
+                          </span>
+                        </div>
+                        <Progress value={paidPercent} className="h-2" />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>
+                            Pendente: {formatCurrency(asset.pendingAmount)}
+                          </span>
+                          <span>{paidPercent.toFixed(0)}% quitado</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Financial Timeline Chart */}
+          {monthlyEvolution.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Evolução & Projeção Financeira
+                </CardTitle>
+                <CardDescription>
+                  Parcelas pagas vs pendentes ao longo do tempo, com projeção
+                  futura
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <FinancialTimelineChart data={monthlyEvolution} />
               </CardContent>
             </Card>
           )}

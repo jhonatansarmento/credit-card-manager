@@ -170,8 +170,10 @@
 
 ---
 
-## Sprint 10 — Proventos & Fluxo de Caixa 🔲
+## Sprint 10 — Proventos & Fluxo de Caixa ✅
 
+> **Commit:** `80e26ed` — _feat: add Income module, Cash Flow page, and dashboard balance section_
+>
 > Rastreamento de receitas (salário, freelance, investimentos, etc.) com lançamentos mensais
 > e página dedicada de fluxo de caixa comparando receita vs despesa.
 
@@ -188,18 +190,57 @@
 
 | #     | Tarefa                                                                                                                                                                                                   | Status |
 | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 10.1  | Enum `IncomeType` + Model `Income` (name, amount, incomeType, isRecurring, receiveDay, startDate, endDate?, isArchived) + Model `IncomeEntry` (referenceMonth, amount, isReceived, receivedAt) no Prisma | 🔲     |
-| 10.2  | Migration SQL manual `20260302120000_add_incomes` (padrão Neon — sem shadow DB)                                                                                                                          | 🔲     |
-| 10.3  | Schema Zod `incomeSchema` com `INCOME_TYPES`, `INCOME_TYPE_LABELS`, superRefine para receiveDay obrigatório quando isRecurring                                                                           | 🔲     |
-| 10.4  | Service layer `income.service.ts`: CRUD + `ensureEntries()` (geração sob demanda) + `toggleEntryReceived` + `getIncomesSummary` + `getMonthlyCashFlow`                                                   | 🔲     |
-| 10.5  | API routes: `/api/incomes` (GET, POST), `/api/incomes/[id]` (PUT, DELETE), `/api/incomes/entries/[id]/toggle` (PATCH)                                                                                    | 🔲     |
-| 10.6  | Formulário `income-form.tsx`: name, incomeType (Select), amount, isRecurring (Switch), receiveDay (condicional), startDate, endDate (condicional), description                                           | 🔲     |
-| 10.7  | Páginas CRUD `/incomes`: listagem com tabela/cards + badge de tipo + toggle recebido inline, `/incomes/new`, `/incomes/[id]` (detalhe), `/incomes/[id]/edit`                                             | 🔲     |
-| 10.8  | Página `/cash-flow`: cards resumo (receita, despesa, saldo, acumulado) + gráfico `ComposedChart` + tabela mensal com cores condicionais                                                                  | 🔲     |
-| 10.9  | Componente `cash-flow-chart.tsx`: Bar verde (receita) + Bar vermelha (despesa) + Line azul (saldo acumulado), meses futuros com opacidade reduzida                                                       | 🔲     |
-| 10.10 | Dashboard: card "Receita do Mês" + seção "Balanço do Mês" (receita vs despesa visual) + link para `/cash-flow`                                                                                           | 🔲     |
-| 10.11 | Sidebar: links "Proventos" (TrendingUp) e "Fluxo de Caixa" (ArrowLeftRight) na seção Organização                                                                                                         | 🔲     |
-| 10.12 | Middleware: proteger rotas `/incomes` e `/cash-flow`                                                                                                                                                     | 🔲     |
+| 10.1  | Enum `IncomeType` + Model `Income` (name, amount, incomeType, isRecurring, receiveDay, startDate, endDate?, isArchived) + Model `IncomeEntry` (referenceMonth, amount, isReceived, receivedAt) no Prisma | ✅     |
+| 10.2  | Migration SQL manual `20260302120000_add_incomes` (padrão Neon — sem shadow DB)                                                                                                                          | ✅     |
+| 10.3  | Schema Zod `incomeSchema` com `INCOME_TYPES`, `INCOME_TYPE_LABELS`, superRefine para receiveDay obrigatório quando isRecurring                                                                           | ✅     |
+| 10.4  | Service layer `income.service.ts`: CRUD + `ensureEntries()` (geração sob demanda) + `toggleEntryReceived` + `getIncomesSummary` + `getMonthlyCashFlow`                                                   | ✅     |
+| 10.5  | API routes: `/api/incomes` (GET, POST), `/api/incomes/[id]` (PUT, DELETE), `/api/incomes/entries/[id]/toggle` (PATCH)                                                                                    | ✅     |
+| 10.6  | Formulário `income-form.tsx`: name, incomeType (Select), amount, isRecurring (Switch), receiveDay (condicional), startDate, endDate (condicional), description                                           | ✅     |
+| 10.7  | Páginas CRUD `/incomes`: listagem com tabela/cards + badge de tipo + toggle recebido inline, `/incomes/new`, `/incomes/[id]` (detalhe), `/incomes/[id]/edit`                                             | ✅     |
+| 10.8  | Página `/cash-flow`: cards resumo (receita, despesa, saldo, acumulado) + gráfico `ComposedChart` + tabela mensal com cores condicionais                                                                  | ✅     |
+| 10.9  | Componente `cash-flow-chart.tsx`: Bar verde (receita) + Bar vermelha (despesa) + Line azul (saldo acumulado), meses futuros com opacidade reduzida                                                       | ✅     |
+| 10.10 | Dashboard: card "Receita do Mês" + seção "Balanço do Mês" (receita vs despesa visual) + link para `/cash-flow`                                                                                           | ✅     |
+| 10.11 | Sidebar: links "Proventos" (TrendingUp) e "Fluxo de Caixa" (ArrowLeftRight) na seção Organização                                                                                                         | ✅     |
+| 10.12 | Middleware: proteger rotas `/incomes` e `/cash-flow`                                                                                                                                                     | ✅     |
+
+---
+
+## Sprint 10b — Otimização do Dashboard 🔲
+
+> Revisão do dashboard para remover redundâncias, corrigir cálculos e priorizar informações acionáveis.
+
+### Problemas Identificados
+
+- **Cálculo de despesa no Balanço incorreto**: usava média aproximada (`installmentsDueThisMonth * (totalPending / activeDebts)`) em vez do valor real das parcelas do mês
+- **"Faturas Atuais" e "Gastos por Cartão" redundantes**: ambos exibem dados financeiros agrupados por cartão
+- **"Evolução Mensal" e "Projeção de Gastos" sobrepostos**: dois gráficos separados para timeline financeira quando um só é suficiente
+- **"Gastos por Pessoa/Empresa"**: informação secundária, já disponível via filtros em `/debts`
+- **"Parcelas Vencidas" no final**: item mais urgente/acionável deveria ter prioridade visual
+- **11 queries paralelas + 6 sequenciais internas**: ~17 queries por page load
+- **867 linhas em um arquivo**: dificulta manutenção
+
+### Layout Otimizado (de → para)
+
+1. Summary Cards (4 KPIs)
+2. ~~Balanço do Mês~~ → Parcelas Vencidas (urgente, borda vermelha) — subiu de posição
+3. Balanço do Mês (corrigido com valor real)
+4. ~~Gastos por Cartão + Gastos por Pessoa~~ → Gastos por Cartão + Gastos por Categoria
+5. Gastos por Bem/Ativo (condicional)
+6. ~~Evolução Mensal + Projeção~~ → Gráfico Unificado (passado + futuro em timeline única)
+7. Próximas Parcelas
+
+**Resultado**: 9 seções → 7, -3 queries removidas, -2 seções redundantes, cálculos corrigidos
+
+| #     | Tarefa                                                                                                                                                  | Status |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 10b.1 | Adicionar `amountDueThisMonth` ao `getDashboardSummary()` — soma real das parcelas do mês (não mais média)                                              | 🔲     |
+| 10b.2 | Corrigir seção "Balanço do Mês" para usar `amountDueThisMonth` em vez de cálculo aproximado                                                             | 🔲     |
+| 10b.3 | Remover seção "Gastos por Pessoa/Empresa" do dashboard (manter função no service para uso futuro)                                                       | 🔲     |
+| 10b.4 | Remover seção "Faturas Atuais" do dashboard (manter função no service para uso futuro)                                                                  | 🔲     |
+| 10b.5 | Criar `FinancialTimelineChart` — gráfico unificado com evolução histórica + projeção futura, barra divisória no mês atual, opacidade reduzida no futuro | 🔲     |
+| 10b.6 | Substituir `MonthlyEvolutionChart` + `ProjectionChart` pelo `FinancialTimelineChart` no dashboard                                                       | 🔲     |
+| 10b.7 | Mover seção "Parcelas Vencidas" para logo após os Summary Cards (antes do Balanço)                                                                      | 🔲     |
+| 10b.8 | Limpar imports e queries não utilizadas, verificar build                                                                                                | 🔲     |
 
 ---
 
@@ -249,11 +290,12 @@
 | 7      | Correções & Polimento      | 10/10   | ✅ Concluído |
 | 8      | Sidebar & Settings         | 10/10   | ✅ Concluído |
 | 9      | Features de Produto        | 12/12   | ✅ Concluído |
-| 10     | Proventos & Fluxo de Caixa | 0/12    | 🔲 Pendente  |
+| 10     | Proventos & Fluxo de Caixa | 12/12   | ✅ Concluído |
+| 10b    | Otimização do Dashboard    | 0/8     | 🔲 Pendente  |
 | 11     | Segurança & Autenticação   | 0/9     | 🔲 Pendente  |
 | 12     | Testes, Performance & DX   | 0/10    | 🔲 Pendente  |
 
-**Total: 79/110 tarefas concluídas (72%)**
+**Total: 91/118 tarefas concluídas (77%)**
 
 ---
 

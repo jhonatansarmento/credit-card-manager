@@ -5,6 +5,7 @@ export interface DashboardSummary {
   totalPending: number;
   totalPaid: number;
   installmentsDueThisMonth: number;
+  amountDueThisMonth: number;
   overallPayoffPercent: number;
 }
 
@@ -76,13 +77,18 @@ export async function getDashboardSummary(
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-  const installmentsDueThisMonth = await prisma.installment.count({
+  const dueThisMonth = await prisma.installment.aggregate({
     where: {
       debt: { userId },
       isPaid: false,
       dueDate: { gte: startOfMonth, lt: startOfNextMonth },
     },
+    _count: true,
+    _sum: { amount: true },
   });
+
+  const installmentsDueThisMonth = dueThisMonth._count;
+  const amountDueThisMonth = Number(dueThisMonth._sum.amount ?? 0);
 
   const overallPayoffPercent =
     totalInstallments > 0 ? (paidCount / totalInstallments) * 100 : 0;
@@ -92,6 +98,7 @@ export async function getDashboardSummary(
     totalPending,
     totalPaid,
     installmentsDueThisMonth,
+    amountDueThisMonth,
     overallPayoffPercent,
   };
 }
