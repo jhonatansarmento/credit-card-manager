@@ -352,7 +352,22 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                         },
                       );
 
-                      const installmentCards = filteredInstallments.map(
+                      // Separate overdue, unpaid and paid installments
+                      const overdue = filteredInstallments.filter(
+                        (i) => !i.isPaid && i.dueDate < new Date(),
+                      );
+                      const upcoming = filteredInstallments.filter(
+                        (i) => !i.isPaid && i.dueDate >= new Date(),
+                      );
+                      const paid = filteredInstallments.filter((i) => i.isPaid);
+                      // Show overdue first, then upcoming, then paid at the end
+                      const sortedInstallments = [
+                        ...overdue,
+                        ...upcoming,
+                        ...paid,
+                      ];
+
+                      const installmentCards = sortedInstallments.map(
                         (installment) => {
                           const isCurrentMonth =
                             installment.dueDate.getMonth() === currentMonth &&
@@ -425,7 +440,8 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
 
                       return (
                         <InstallmentCollapse
-                          totalCount={filteredInstallments.length}
+                          totalCount={sortedInstallments.length}
+                          paidCount={paid.length}
                         >
                           {installmentCards}
                         </InstallmentCollapse>
