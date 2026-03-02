@@ -156,46 +156,62 @@ export async function getSpendingByCard(
 export async function getSpendingByPerson(
   userId: string,
 ): Promise<SpendingByPerson[]> {
-  const debts = await prisma.debt.findMany({
-    where: { userId },
+  // Use DebtParticipant model to aggregate spending by person
+  const participants = await prisma.debtParticipant.findMany({
+    where: { debt: { userId } },
     select: {
       personCompanyId: true,
       personCompany: { select: { name: true } },
+      amount: true,
+      debt: {
+        select: {
+          installments: {
+            select: { amount: true, isPaid: true },
+          },
+        },
+      },
     },
   });
 
-  const personMap = new Map<string, string>();
-  for (const d of debts) {
-    personMap.set(d.personCompanyId, d.personCompany.name);
+  const personMap = new Map<
+    string,
+    {
+      name: string;
+      totalAmount: number;
+      pendingAmount: number;
+      debtIds: Set<string>;
+    }
+  >();
+
+  for (const p of participants) {
+    const entry = personMap.get(p.personCompanyId) ?? {
+      name: p.personCompany.name,
+      totalAmount: 0,
+      pendingAmount: 0,
+      debtIds: new Set<string>(),
+    };
+
+    const totalInst = p.debt.installments.reduce(
+      (sum, i) => sum + Number(i.amount),
+      0,
+    );
+    const pendingInst = p.debt.installments
+      .filter((i) => !i.isPaid)
+      .reduce((sum, i) => sum + Number(i.amount), 0);
+
+    entry.totalAmount += totalInst;
+    entry.pendingAmount += pendingInst;
+    personMap.set(p.personCompanyId, entry);
   }
 
-  const personIds = Array.from(personMap.keys());
-  if (personIds.length === 0) return [];
-
-  const results = await Promise.all(
-    personIds.map(async (personCompanyId) => {
-      const [totalAgg, pendingAgg, debtCount] = await Promise.all([
-        prisma.installment.aggregate({
-          where: { debt: { userId, personCompanyId } },
-          _sum: { amount: true },
-        }),
-        prisma.installment.aggregate({
-          where: { debt: { userId, personCompanyId }, isPaid: false },
-          _sum: { amount: true },
-        }),
-        prisma.debt.count({ where: { userId, personCompanyId } }),
-      ]);
-
-      return {
-        personName: personMap.get(personCompanyId)!,
-        totalAmount: Number(totalAgg._sum.amount ?? 0),
-        pendingAmount: Number(pendingAgg._sum.amount ?? 0),
-        debtCount,
-      };
-    }),
-  );
-
-  return results.sort((a, b) => b.totalAmount - a.totalAmount);
+  return Array.from(personMap.values())
+    .map((v) => ({
+      personName: v.name,
+      totalAmount: v.totalAmount,
+      pendingAmount: v.pendingAmount,
+      debtCount: v.debtIds.size,
+    }))
+    .sort((a, b) => b.totalAmount - a.totalAmount);
 }
 
 export async function getMonthlyEvolution(
@@ -250,6 +266,9 @@ export async function getUpcomingInstallments(
           installmentsQuantity: true,
           creditCard: { select: { name: true } },
           personCompany: { select: { name: true } },
+          participants: {
+            select: { personCompany: { select: { name: true } } },
+          },
         },
       },
     },
@@ -261,7 +280,10 @@ export async function getUpcomingInstallments(
     id: inst.id,
     debtDescription: inst.debt.description,
     cardName: inst.debt.creditCard?.name ?? 'Sem cartão',
-    personName: inst.debt.personCompany.name,
+    personName:
+      inst.debt.participants.length > 0
+        ? inst.debt.participants.map((p) => p.personCompany.name).join(', ')
+        : (inst.debt.personCompany?.name ?? '-'),
     installmentNumber: inst.installmentNumber,
     totalInstallments: inst.debt.installmentsQuantity,
     dueDate: inst.dueDate,
@@ -289,6 +311,9 @@ export async function getOverdueInstallments(
           installmentsQuantity: true,
           creditCard: { select: { name: true } },
           personCompany: { select: { name: true } },
+          participants: {
+            select: { personCompany: { select: { name: true } } },
+          },
         },
       },
     },
@@ -300,7 +325,10 @@ export async function getOverdueInstallments(
     id: inst.id,
     debtDescription: inst.debt.description,
     cardName: inst.debt.creditCard?.name ?? 'Sem cartão',
-    personName: inst.debt.personCompany.name,
+    personName:
+      inst.debt.participants.length > 0
+        ? inst.debt.participants.map((p) => p.personCompany.name).join(', ')
+        : (inst.debt.personCompany?.name ?? '-'),
     installmentNumber: inst.installmentNumber,
     totalInstallments: inst.debt.installmentsQuantity,
     dueDate: inst.dueDate,

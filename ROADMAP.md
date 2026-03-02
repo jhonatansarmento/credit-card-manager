@@ -205,7 +205,9 @@
 
 ---
 
-## Sprint 10b — Otimização do Dashboard 🔲
+## Sprint 10b — Otimização do Dashboard ✅
+
+> **Commit:** `d1ce144` — _refactor: optimize dashboard - remove redundancies, fix calculations, unify charts_
 
 > Revisão do dashboard para remover redundâncias, corrigir cálculos e priorizar informações acionáveis.
 
@@ -233,14 +235,45 @@
 
 | #     | Tarefa                                                                                                                                                  | Status |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 10b.1 | Adicionar `amountDueThisMonth` ao `getDashboardSummary()` — soma real das parcelas do mês (não mais média)                                              | 🔲     |
-| 10b.2 | Corrigir seção "Balanço do Mês" para usar `amountDueThisMonth` em vez de cálculo aproximado                                                             | 🔲     |
-| 10b.3 | Remover seção "Gastos por Pessoa/Empresa" do dashboard (manter função no service para uso futuro)                                                       | 🔲     |
-| 10b.4 | Remover seção "Faturas Atuais" do dashboard (manter função no service para uso futuro)                                                                  | 🔲     |
-| 10b.5 | Criar `FinancialTimelineChart` — gráfico unificado com evolução histórica + projeção futura, barra divisória no mês atual, opacidade reduzida no futuro | 🔲     |
-| 10b.6 | Substituir `MonthlyEvolutionChart` + `ProjectionChart` pelo `FinancialTimelineChart` no dashboard                                                       | 🔲     |
-| 10b.7 | Mover seção "Parcelas Vencidas" para logo após os Summary Cards (antes do Balanço)                                                                      | 🔲     |
-| 10b.8 | Limpar imports e queries não utilizadas, verificar build                                                                                                | 🔲     |
+| 10b.1 | Adicionar `amountDueThisMonth` ao `getDashboardSummary()` — soma real das parcelas do mês (não mais média)                                              | ✅     |
+| 10b.2 | Corrigir seção "Balanço do Mês" para usar `amountDueThisMonth` em vez de cálculo aproximado                                                             | ✅     |
+| 10b.3 | Remover seção "Gastos por Pessoa/Empresa" do dashboard (manter função no service para uso futuro)                                                       | ✅     |
+| 10b.4 | Remover seção "Faturas Atuais" do dashboard (manter função no service para uso futuro)                                                                  | ✅     |
+| 10b.5 | Criar `FinancialTimelineChart` — gráfico unificado com evolução histórica + projeção futura, barra divisória no mês atual, opacidade reduzida no futuro | ✅     |
+| 10b.6 | Substituir `MonthlyEvolutionChart` + `ProjectionChart` pelo `FinancialTimelineChart` no dashboard                                                       | ✅     |
+| 10b.7 | Mover seção "Parcelas Vencidas" para logo após os Summary Cards (antes do Balanço)                                                                      | ✅     |
+| 10b.8 | Limpar imports e queries não utilizadas, verificar build                                                                                                | ✅     |
+
+---
+
+## Sprint 10c — Multi-Participantes por Dívida 🔲
+
+> Permite associar múltiplas pessoas/empresas a uma mesma dívida, cada uma com seu valor/parcela.
+> Casos de uso: compra com itens de pessoas diferentes, viagens divididas, etc.
+
+### Decisões de Design
+
+- **Modelo**: Tabela `DebtParticipant` (debtId, personCompanyId, amount) — substitui o campo `personCompanyId` direto na Debt
+- **Migração**: Dados existentes migrados automaticamente (personCompanyId + totalAmount → DebtParticipant)
+- **Validação**: Soma dos valores dos participantes deve igualar o `totalAmount` da dívida
+- **Sem rastreamento de pagamento por participante**: Apenas informativo (quem deve quanto)
+- **"Dividir igualmente"**: Botão que distribui o totalAmount entre os participantes, último absorve centavos
+- **UX**: Formulário começa com 1 pessoa + botão "Adicionar pessoa"
+- **Delete protection**: PersonCompany não pode ser excluída se participar de alguma dívida (via DebtParticipant)
+- **Filtros**: Filtro por pessoa nas dívidas busca em DebtParticipant
+
+| #      | Tarefa                                                                                                                                                     | Status |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 10c.1  | Model `DebtParticipant` (debtId, personCompanyId, amount) + tornar `personCompanyId` nullable na Debt + migration com dados existentes                     | 🔲     |
+| 10c.2  | Atualizar `debtSchema` Zod — campo `participants: [{personCompanyId, amount}]`, validação de soma = totalAmount, mínimo 1 participante                     | 🔲     |
+| 10c.3  | Atualizar `debt.service.ts` — CRUD com createMany/deleteMany de participants, atualizar `duplicateDebt`, `exportDebtsCSV`, `listDebts` (filtro por pessoa) | 🔲     |
+| 10c.4  | Atualizar API routes — aceitar participants no payload                                                                                                     | 🔲     |
+| 10c.5  | Refatorar `debt-form.tsx` — lista de participantes com "+ Adicionar pessoa", botão "Dividir igualmente", validação de soma, criação inline de pessoa       | 🔲     |
+| 10c.6  | Atualizar listagem de dívidas (`/debts`) — mostrar múltiplos badges de participantes                                                                       | 🔲     |
+| 10c.7  | Atualizar detalhe da dívida (`/debts/[id]`) — seção de participantes com nome + valor                                                                      | 🔲     |
+| 10c.8  | Atualizar delete protection de PersonCompany — checar DebtParticipant em vez de Debt.personCompanyId                                                       | 🔲     |
+| 10c.9  | Atualizar dashboard queries que usam personCompany (spending by person) para usar DebtParticipant                                                          | 🔲     |
+| 10c.10 | Build, verificar e commit                                                                                                                                  | 🔲     |
 
 ---
 
@@ -279,23 +312,24 @@
 
 ## Resumo de Progresso
 
-| Sprint | Descrição                  | Tarefas | Status       |
-| ------ | -------------------------- | ------- | ------------ |
-| 1      | Correções Críticas         | 9/9     | ✅ Concluído |
-| 2      | Arquitetura & Qualidade    | 9/9     | ✅ Concluído |
-| 3      | UX & Feedback Visual       | 8/8     | ✅ Concluído |
-| 4      | Dashboard & Analytics      | 6/6     | ✅ Concluído |
-| 5      | Segurança & Infraestrutura | 7/7     | ✅ Concluído |
-| 6      | Features Avançadas         | 8/8     | ✅ Concluído |
-| 7      | Correções & Polimento      | 10/10   | ✅ Concluído |
-| 8      | Sidebar & Settings         | 10/10   | ✅ Concluído |
-| 9      | Features de Produto        | 12/12   | ✅ Concluído |
-| 10     | Proventos & Fluxo de Caixa | 12/12   | ✅ Concluído |
-| 10b    | Otimização do Dashboard    | 0/8     | 🔲 Pendente  |
-| 11     | Segurança & Autenticação   | 0/9     | 🔲 Pendente  |
-| 12     | Testes, Performance & DX   | 0/10    | 🔲 Pendente  |
+| Sprint | Descrição                      | Tarefas | Status       |
+| ------ | ------------------------------ | ------- | ------------ |
+| 1      | Correções Críticas             | 9/9     | ✅ Concluído |
+| 2      | Arquitetura & Qualidade        | 9/9     | ✅ Concluído |
+| 3      | UX & Feedback Visual           | 8/8     | ✅ Concluído |
+| 4      | Dashboard & Analytics          | 6/6     | ✅ Concluído |
+| 5      | Segurança & Infraestrutura     | 7/7     | ✅ Concluído |
+| 6      | Features Avançadas             | 8/8     | ✅ Concluído |
+| 7      | Correções & Polimento          | 10/10   | ✅ Concluído |
+| 8      | Sidebar & Settings             | 10/10   | ✅ Concluído |
+| 9      | Features de Produto            | 12/12   | ✅ Concluído |
+| 10     | Proventos & Fluxo de Caixa     | 12/12   | ✅ Concluído |
+| 10b    | Otimização do Dashboard        | 8/8     | ✅ Concluído |
+| 10c    | Multi-Participantes por Dívida | 0/10    | 🔲 Pendente  |
+| 11     | Segurança & Autenticação       | 0/9     | 🔲 Pendente  |
+| 12     | Testes, Performance & DX       | 0/10    | 🔲 Pendente  |
 
-**Total: 91/118 tarefas concluídas (77%)**
+**Total: 99/128 tarefas concluídas (77%)**
 
 ---
 

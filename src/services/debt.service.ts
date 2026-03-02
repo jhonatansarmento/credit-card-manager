@@ -1,10 +1,15 @@
 import prisma from '@/lib/db';
 import { Prisma } from '@prisma/client';
 
+export interface ParticipantPayload {
+  personCompanyId: string;
+  amount: number;
+}
+
 export interface DebtPayload {
   paymentMethod?: string;
   cardId?: string | null;
-  personCompanyId: string;
+  participants: ParticipantPayload[];
   categoryId?: string | null;
   assetId?: string | null;
   dueDay?: number | null;
@@ -118,7 +123,7 @@ function validateDebtPayload(payload: DebtPayload) {
   const {
     paymentMethod,
     cardId,
-    personCompanyId,
+    participants,
     totalAmount,
     installmentsQuantity,
     description,
@@ -126,7 +131,8 @@ function validateDebtPayload(payload: DebtPayload) {
   } = payload;
 
   if (
-    !personCompanyId ||
+    !participants ||
+    participants.length === 0 ||
     isNaN(totalAmount) ||
     isNaN(installmentsQuantity) ||
     !description
@@ -144,6 +150,12 @@ function validateDebtPayload(payload: DebtPayload) {
       'O valor total e a quantidade de parcelas devem ser positivos.',
     );
   }
+
+  // Validate participants sum
+  const sum = participants.reduce((acc, p) => acc + p.amount, 0);
+  if (Math.abs(sum - totalAmount) > 0.01) {
+    throw new Error('A soma dos participantes deve ser igual ao valor total.');
+  }
 }
 
 export async function getDebt(id: string, userId: string) {
@@ -160,6 +172,10 @@ export async function getDebtDetail(id: string, userId: string) {
       personCompany: true,
       category: true,
       asset: true,
+      participants: {
+        include: { personCompany: true },
+        orderBy: { amount: 'desc' },
+      },
       installments: { orderBy: { installmentNumber: 'asc' } },
     },
   });
@@ -189,7 +205,11 @@ export async function listDebts(
   };
 
   if (cardId) whereClause.cardId = cardId;
-  if (personCompanyId) whereClause.personCompanyId = personCompanyId;
+  if (personCompanyId) {
+    whereClause.participants = {
+      some: { personCompanyId },
+    };
+  }
   if (assetId) whereClause.assetId = assetId;
 
   // 6.4 — Search by description
@@ -270,6 +290,10 @@ async function findDebts(
       personCompany: true,
       category: true,
       asset: true,
+      participants: {
+        include: { personCompany: true },
+        orderBy: { amount: 'desc' },
+      },
       installments: { orderBy: { installmentNumber: 'asc' } },
     },
     orderBy,
@@ -297,7 +321,7 @@ export async function createDebt(userId: string, payload: DebtPayload) {
         userId,
         paymentMethod: (payload.paymentMethod as any) || 'CREDIT_CARD',
         cardId: payload.cardId || null,
-        personCompanyId: payload.personCompanyId,
+        personCompanyId: null,
         categoryId: payload.categoryId || null,
         assetId: payload.assetId || null,
         dueDay: payload.dueDay || null,
@@ -308,6 +332,14 @@ export async function createDebt(userId: string, payload: DebtPayload) {
         description: payload.description,
         isRecurring: payload.isRecurring || false,
         installments: { createMany: { data: installmentsData } },
+        participants: {
+          createMany: {
+            data: payload.participants.map((p) => ({
+              personCompanyId: p.personCompanyId,
+              amount: p.amount,
+            })),
+          },
+        },
       },
     });
   } catch (error) {
@@ -354,7 +386,7 @@ export async function updateDebt(
       data: {
         paymentMethod: (payload.paymentMethod as any) || 'CREDIT_CARD',
         cardId: payload.cardId || null,
-        personCompanyId: payload.personCompanyId,
+        personCompanyId: null,
         categoryId: payload.categoryId ?? null,
         assetId: payload.assetId ?? null,
         dueDay: payload.dueDay || null,
@@ -367,6 +399,15 @@ export async function updateDebt(
         installments: {
           deleteMany: {},
           createMany: { data: installmentsWithStatus },
+        },
+        participants: {
+          deleteMany: {},
+          createMany: {
+            data: payload.participants.map((p) => ({
+              personCompanyId: p.personCompanyId,
+              amount: p.amount,
+            })),
+          },
         },
       },
     });
@@ -430,10 +471,19 @@ export async function duplicateDebt(debtId: string, userId: string) {
     throw new Error('Dívida não encontrada ou você não tem permissão.');
   }
 
+  // Fetch participants from original debt
+  const originalParticipants = await prisma.debtParticipant.findMany({
+    where: { debtId: original.id },
+    select: { personCompanyId: true, amount: true },
+  });
+
   const payload: DebtPayload = {
     paymentMethod: original.paymentMethod,
     cardId: original.cardId,
-    personCompanyId: original.personCompanyId,
+    participants: originalParticipants.map((p) => ({
+      personCompanyId: p.personCompanyId,
+      amount: Number(p.amount),
+    })),
     categoryId: original.categoryId,
     assetId: original.assetId,
     dueDay: original.dueDay,
@@ -480,13 +530,17 @@ export async function exportDebtsCSV(
   ];
 
   for (const debt of result.data) {
+    const participantNames =
+      debt.participants.length > 0
+        ? debt.participants.map((p) => p.personCompany.name).join(' | ')
+        : debt.personCompany?.name || '-';
     for (const inst of debt.installments) {
       lines.push(
         [
           `"${debt.description}"`,
           `"${debt.paymentMethod}"`,
           `"${debt.creditCard?.name || '-'}"`,
-          `"${debt.personCompany.name}"`,
+          `"${participantNames}"`,
           `"${debt.asset?.name || '-'}"`,
           Number(debt.totalAmount).toFixed(2),
           debt.installmentsQuantity,

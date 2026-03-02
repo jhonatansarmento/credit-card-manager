@@ -6,7 +6,7 @@ import { getAuthSession } from '@/lib/auth-session';
 import { listAssets } from '@/services/asset.service';
 import { listCategories } from '@/services/category.service';
 import { listCreditCards } from '@/services/credit-card.service';
-import { getDebt } from '@/services/debt.service';
+import { getDebtDetail } from '@/services/debt.service';
 import { listNames } from '@/services/name.service';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -22,7 +22,7 @@ export default async function EditDebtPage({ params }: EditDebtPageProps) {
   const session = await getAuthSession();
   const userId = session.user.id;
 
-  const debt = await getDebt(id, userId);
+  const debt = await getDebtDetail(id, userId);
 
   if (!debt) {
     notFound();
@@ -37,6 +37,10 @@ export default async function EditDebtPage({ params }: EditDebtPageProps) {
     cardId: debt.cardId ?? undefined,
     assetId: debt.assetId ?? undefined,
     dueDay: debt.dueDay ?? undefined,
+    participants: debt.participants.map((p) => ({
+      personCompanyId: p.personCompanyId,
+      amount: Number(p.amount),
+    })),
   };
 
   const [creditCards, personCompanies, categories, assets] = await Promise.all([

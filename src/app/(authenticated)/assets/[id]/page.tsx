@@ -272,7 +272,7 @@ export default async function AssetDetailPage({
                             </Badge>
                           )}
                           <span>•</span>
-                          <span>{debt.personCompany.name}</span>
+                          <span>{debt.personCompany?.name ?? '-'}</span>
                           {debt.category && (
                             <>
                               <span>•</span>

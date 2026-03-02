@@ -18,13 +18,25 @@ export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   CASH: 'Dinheiro',
 };
 
+export const participantSchema = z.object({
+  personCompanyId: z
+    .string()
+    .min(1, { message: 'Selecione uma pessoa/empresa.' }),
+  amount: z
+    .number({ message: 'O valor é obrigatório.' })
+    .positive({ message: 'O valor deve ser positivo.' })
+    .max(9999999.99, { message: 'O valor máximo é R$ 9.999.999,99.' }),
+});
+
+export type ParticipantFormData = z.input<typeof participantSchema>;
+
 export const debtSchema = z
   .object({
     paymentMethod: z.enum(PAYMENT_METHODS).default('CREDIT_CARD'),
     cardId: z.string().nullish(),
-    personCompanyId: z
-      .string()
-      .min(1, { message: 'Selecione uma pessoa/empresa.' }),
+    participants: z
+      .array(participantSchema)
+      .min(1, { message: 'Adicione pelo menos um participante.' }),
     categoryId: z.string().nullish(),
     assetId: z.string().nullish(),
     dueDay: z
@@ -73,6 +85,30 @@ export const debtSchema = z
           path: ['dueDay'],
         });
       }
+    }
+
+    // Validate participants sum equals totalAmount
+    if (data.participants && data.participants.length > 0) {
+      const sum = data.participants.reduce((acc, p) => acc + p.amount, 0);
+      const diff = Math.abs(sum - data.totalAmount);
+      if (diff > 0.01) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `A soma dos participantes (R$ ${sum.toFixed(2)}) deve ser igual ao valor total (R$ ${data.totalAmount.toFixed(2)}).`,
+          path: ['participants'],
+        });
+      }
+    }
+
+    // Validate no duplicate participants
+    const personIds = data.participants?.map((p) => p.personCompanyId) ?? [];
+    const uniqueIds = new Set(personIds);
+    if (uniqueIds.size !== personIds.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Não é permitido repetir participantes na mesma dívida.',
+        path: ['participants'],
+      });
     }
   });
 

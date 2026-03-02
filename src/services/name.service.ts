@@ -62,11 +62,20 @@ export async function updateName(
 }
 
 export async function deleteName(id: string, userId: string) {
-  const associatedDebts = await prisma.debt.count({
-    where: { personCompanyId: id, userId },
-  });
+  // Check both legacy personCompanyId on Debt and new DebtParticipant model
+  const [associatedDebts, associatedParticipations] = await Promise.all([
+    prisma.debt.count({
+      where: { personCompanyId: id, userId },
+    }),
+    prisma.debtParticipant.count({
+      where: {
+        personCompanyId: id,
+        debt: { userId },
+      },
+    }),
+  ]);
 
-  if (associatedDebts > 0) {
+  if (associatedDebts > 0 || associatedParticipations > 0) {
     throw new Error(
       'Não é possível excluir: este nome possui dívidas associadas. Por favor, exclua as dívidas primeiro.',
     );

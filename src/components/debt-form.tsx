@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -62,13 +62,12 @@ import type {
 } from '@prisma/client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Trash2 } from 'lucide-react';
 
 interface SerializedDebt {
   id: string;
   paymentMethod?: string;
   cardId?: string | null;
-  personCompanyId: string;
   categoryId?: string | null;
   assetId?: string | null;
   dueDay?: number | null;
@@ -78,6 +77,10 @@ interface SerializedDebt {
   startDate: Date;
   description: string;
   isRecurring?: boolean;
+  participants?: Array<{
+    personCompanyId: string;
+    amount: number;
+  }>;
 }
 
 interface DebtFormProps {
@@ -152,21 +155,38 @@ export default function DebtForm({
   const [newAssetEmoji, setNewAssetEmoji] = useState('📦');
   const [creatingCard, setCreatingCard] = useState(false);
   const [creatingName, setCreatingName] = useState(false);
+  const [activeParticipantIndex, setActiveParticipantIndex] = useState(0);
   const [creatingAsset, setCreatingAsset] = useState(false);
+
+  // For recurring debts, divide participant amounts by installments for display
+  const displayedTotalAmount =
+    debt?.isRecurring && debt?.totalAmount && debt?.installmentsQuantity
+      ? Number((debt.totalAmount / debt.installmentsQuantity).toFixed(2))
+      : (debt?.totalAmount ?? undefined);
+
+  const defaultParticipants = (() => {
+    if (debt?.participants && debt.participants.length > 0) {
+      if (debt.isRecurring && debt.installmentsQuantity) {
+        return debt.participants.map((p) => ({
+          personCompanyId: p.personCompanyId,
+          amount: Number((p.amount / debt.installmentsQuantity).toFixed(2)),
+        }));
+      }
+      return debt.participants;
+    }
+    return [{ personCompanyId: '', amount: displayedTotalAmount ?? 0 }];
+  })();
 
   const form = useForm<DebtFormData>({
     resolver: zodResolver(debtSchema),
     defaultValues: {
       paymentMethod: (debt?.paymentMethod as any) ?? 'CREDIT_CARD',
       cardId: debt?.cardId ?? '',
-      personCompanyId: debt?.personCompanyId ?? '',
+      participants: defaultParticipants,
       categoryId: debt?.categoryId ?? undefined,
       assetId: debt?.assetId ?? initialAssetId ?? undefined,
       dueDay: debt?.dueDay ?? undefined,
-      totalAmount:
-        debt?.isRecurring && debt?.totalAmount && debt?.installmentsQuantity
-          ? Number((debt.totalAmount / debt.installmentsQuantity).toFixed(2))
-          : (debt?.totalAmount ?? undefined),
+      totalAmount: displayedTotalAmount,
       installmentsQuantity: debt?.installmentsQuantity ?? undefined,
       startDate: debt?.startDate
         ? debt.startDate.toISOString().split('T')[0]
@@ -174,6 +194,11 @@ export default function DebtForm({
       description: debt?.description ?? '',
       isRecurring: debt?.isRecurring ?? false,
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'participants',
   });
 
   const watchedPaymentMethod = form.watch('paymentMethod');
@@ -250,7 +275,10 @@ export default function DebtForm({
       if (!res.ok) throw new Error('Erro ao criar nome.');
       const name = await res.json();
       setLocalNames((prev) => [...prev, name]);
-      form.setValue('personCompanyId', name.id);
+      form.setValue(
+        `participants.${activeParticipantIndex}.personCompanyId`,
+        name.id,
+      );
       setNameDialogOpen(false);
       setNewNameValue('');
       toast.success('Nome criado!');
@@ -297,6 +325,10 @@ export default function DebtForm({
         payload.totalAmount = Number(
           (data.totalAmount * data.installmentsQuantity).toFixed(2),
         );
+        payload.participants = data.participants.map((p) => ({
+          ...p,
+          amount: Number((p.amount * data.installmentsQuantity).toFixed(2)),
+        }));
       }
 
       // Default startDate to today if empty
@@ -497,74 +529,180 @@ export default function DebtForm({
               />
             )}
 
-            {/* Person/Company field with inline creation */}
-            <FormField
-              control={form.control}
-              name="personCompanyId"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Pessoa/Empresa</FormLabel>
-                    <Dialog
-                      open={nameDialogOpen}
-                      onOpenChange={setNameDialogOpen}
-                    >
-                      <DialogTrigger asChild>
+            {/* Participants Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium leading-none">
+                  Participantes
+                </label>
+                <div className="flex gap-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-6 text-xs"
+                    onClick={() => {
+                      const currentTotal = form.getValues('totalAmount');
+                      if (!currentTotal || fields.length === 0) return;
+                      const base = Number(
+                        (currentTotal / fields.length).toFixed(2),
+                      );
+                      const sumOfBase = Number(
+                        (base * (fields.length - 1)).toFixed(2),
+                      );
+                      const last = Number(
+                        (currentTotal - sumOfBase).toFixed(2),
+                      );
+                      fields.forEach((_, i) => {
+                        form.setValue(
+                          `participants.${i}.amount`,
+                          i === fields.length - 1 ? last : base,
+                          { shouldValidate: true },
+                        );
+                      });
+                    }}
+                  >
+                    Dividir igualmente
+                  </Button>
+                  <Dialog
+                    open={nameDialogOpen}
+                    onOpenChange={setNameDialogOpen}
+                  >
+                    <DialogTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-xs"
+                      >
+                        <PlusCircle className="h-3 w-3 mr-1" />
+                        Nova Pessoa
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Nova Pessoa/Empresa</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-2">
+                        <div className="grid gap-2">
+                          <label className="text-sm font-medium">Nome</label>
+                          <Input
+                            placeholder="Ex: Amazon, João"
+                            value={newNameValue}
+                            onChange={(e) => setNewNameValue(e.target.value)}
+                          />
+                        </div>
                         <Button
                           type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 text-xs"
+                          onClick={handleCreateName}
+                          disabled={creatingName}
                         >
-                          <PlusCircle className="h-3 w-3 mr-1" />
-                          Novo
+                          {creatingName ? 'Criando...' : 'Criar Nome'}
                         </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Nova Pessoa/Empresa</DialogTitle>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-2">
-                          <div className="grid gap-2">
-                            <label className="text-sm font-medium">Nome</label>
-                            <Input
-                              placeholder="Ex: Amazon, João"
-                              value={newNameValue}
-                              onChange={(e) => setNewNameValue(e.target.value)}
-                            />
-                          </div>
-                          <Button
-                            type="button"
-                            onClick={handleCreateName}
-                            disabled={creatingName}
-                          >
-                            {creatingName ? 'Criando...' : 'Criar Nome'}
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma pessoa/empresa" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {localNames.map((pc) => (
-                        <SelectItem key={pc.id} value={pc.id}>
-                          {pc.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
+
+              {fields.map((field, index) => (
+                <div key={field.id} className="flex gap-2 items-start">
+                  <FormField
+                    control={form.control}
+                    name={`participants.${index}.personCompanyId`}
+                    render={({ field: selectField }) => (
+                      <FormItem className="flex-1">
+                        <Select
+                          onValueChange={selectField.onChange}
+                          value={selectField.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Pessoa/Empresa" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {localNames.map((pc) => (
+                              <SelectItem key={pc.id} value={pc.id}>
+                                {pc.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`participants.${index}.amount`}
+                    render={({ field: amountField }) => (
+                      <FormItem className="w-32">
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="Valor"
+                            value={amountField.value ?? ''}
+                            onChange={(e) =>
+                              amountField.onChange(e.target.valueAsNumber)
+                            }
+                            onBlur={amountField.onBlur}
+                            name={amountField.name}
+                            ref={amountField.ref}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {fields.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 shrink-0"
+                      onClick={() => remove(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => {
+                  setActiveParticipantIndex(fields.length);
+                  append({ personCompanyId: '', amount: 0 });
+                }}
+              >
+                <PlusCircle className="h-3 w-3 mr-1" />
+                Adicionar Participante
+              </Button>
+
+              {form.formState.errors.participants?.message && (
+                <p className="text-sm font-medium text-destructive">
+                  {form.formState.errors.participants.message}
+                </p>
               )}
-            />
+
+              {/* Participants sum indicator */}
+              {fields.length > 1 && (
+                <p className="text-xs text-muted-foreground">
+                  Soma:{' '}
+                  {formatCurrency(
+                    form
+                      .getValues('participants')
+                      ?.reduce((s, p) => s + (p.amount || 0), 0) ?? 0,
+                  )}{' '}
+                  / Total: {formatCurrency(totalAmount || 0)}
+                </p>
+              )}
+            </div>
 
             {/* Category */}
             {categories.length > 0 && (

@@ -52,7 +52,8 @@ model PersonCompany {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   name   String
 
-  debts Debt[]
+  debts          Debt[]
+  participations DebtParticipant[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -76,8 +77,8 @@ model Debt {
   user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   cardId               String?
   creditCard           CreditCard?   @relation(fields: [cardId], references: [id], onDelete: Restrict)
-  personCompanyId      String
-  personCompany        PersonCompany @relation(fields: [personCompanyId], references: [id], onDelete: Restrict)
+  personCompanyId      String?
+  personCompany        PersonCompany? @relation(fields: [personCompanyId], references: [id], onDelete: Restrict)
   categoryId           String?
   category             Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   assetId              String?
@@ -93,6 +94,7 @@ model Debt {
   isRecurring          Boolean       @default(false)
 
   installments Installment[]
+  participants DebtParticipant[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -102,6 +104,19 @@ model Debt {
   @@index([personCompanyId])
   @@index([categoryId])
   @@index([assetId])
+}
+
+model DebtParticipant {
+  id              String        @id @default(cuid())
+  debtId          String
+  debt            Debt          @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  personCompanyId String
+  personCompany   PersonCompany @relation(fields: [personCompanyId], references: [id], onDelete: Restrict)
+  amount          Decimal       @db.Decimal(10, 2)
+
+  @@unique([debtId, personCompanyId])
+  @@index([debtId])
+  @@index([personCompanyId])
 }
 
 model Asset {

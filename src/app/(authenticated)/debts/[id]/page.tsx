@@ -145,10 +145,25 @@ export default async function DebtDetailPage({ params }: DebtDetailPageProps) {
             <div className="flex items-center gap-2">
               <User className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-muted-foreground">Pessoa/Empresa</p>
-                <span className="text-sm font-medium">
-                  {debt.personCompany.name}
-                </span>
+                <p className="text-xs text-muted-foreground">
+                  {debt.participants.length > 1
+                    ? 'Participantes'
+                    : 'Pessoa/Empresa'}
+                </p>
+                {debt.participants.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {debt.participants.map((p) => (
+                      <Badge key={p.id} variant="outline" className="text-xs">
+                        {p.personCompany.name} –{' '}
+                        {formatCurrency(Number(p.amount))}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-sm font-medium">
+                    {debt.personCompany?.name ?? '-'}
+                  </span>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2">

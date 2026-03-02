@@ -275,7 +275,11 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
                         </Badge>
                       )}
                       <Badge variant="outline" className="text-xs">
-                        {debt.personCompany.name}
+                        {debt.participants.length > 0
+                          ? debt.participants
+                              .map((p) => p.personCompany.name)
+                              .join(', ')
+                          : (debt.personCompany?.name ?? '-')}
                       </Badge>
                       {debt.isArchived && (
                         <Badge variant="secondary" className="text-xs">
